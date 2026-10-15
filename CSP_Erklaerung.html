@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prüfungsraum-CSP Gruppe C</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,650&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: eine Lesespalte wie ein Skript, Stundenplan-Raster als wiederkehrendes Motiv */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --fg: #1d2430;
+  --muted: #5b6577;
+  --line: #d9dee6;
+  --accent: #2e5e8c;
+  --accent-soft: #e3ecf5;
+  --ok: #2f7d4f;
+  --open: #a35d12;
+  --c-MB: #c9dcef; --c-DS: #d8ead2; --c-MT: #f2dcc4; --c-ES: #e6d6ef;
+  --c-INF: #f3cfd1; --c-ET: #d3ecea; --c-WIW: #efe8bf;
+  --heat-lo: #f3f5f8; --heat-hi: #2e5e8c;
+  --font-display: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141922; --surface: #1b212c; --fg: #e4e8ef; --muted: #9aa5b6; --line: #2e3746;
+    --accent: #8db8e3; --accent-soft: #223246; --ok: #7cc79a; --open: #e0a560;
+    --c-MB: #2b4560; --c-DS: #2f4a2e; --c-MT: #584029; --c-ES: #45335a;
+    --c-INF: #5e2f34; --c-ET: #23504c; --c-WIW: #51491f;
+    --heat-lo: #1f2631; --heat-hi: #8db8e3;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141922; --surface: #1b212c; --fg: #e4e8ef; --muted: #9aa5b6; --line: #2e3746;
+  --accent: #8db8e3; --accent-soft: #223246; --ok: #7cc79a; --open: #e0a560;
+  --c-MB: #2b4560; --c-DS: #2f4a2e; --c-MT: #584029; --c-ES: #45335a;
+  --c-INF: #5e2f34; --c-ET: #23504c; --c-WIW: #51491f;
+  --heat-lo: #1f2631; --heat-hi: #8db8e3;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 400 1.0625rem/1.6 var(--font-body);
+  padding-inline: 16px; padding-block: 0 4rem;
+}
+.wrap { max-width: 46rem; margin: 0 auto; display: grid; gap: 3rem; }
+header { padding-block: 3rem 0; display: grid; gap: .75rem; }
+.eyebrow { font: 600 .75rem/1 var(--font-body); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 2.75rem); font-weight: 650; }
+h2 { font-size: 1.6rem; font-weight: 650; }
+h3 { font-size: 1.15rem; font-weight: 650; }
+p { margin: 0; max-width: 65ch; }
+.lead { font-size: 1.15rem; color: var(--muted); }
+section { display: grid; gap: 1rem; }
+section > h2 { padding-top: 1.5rem; border-top: 1px solid var(--line); display: flex; gap: .6rem; align-items: baseline; flex-wrap: wrap; }
+.tag { font: 600 .8rem/1 var(--font-mono); color: var(--accent); background: var(--accent-soft); padding: .3rem .45rem; border-radius: 4px; }
+code, .mono { font-family: var(--font-mono); font-size: .88em; }
+code { background: var(--accent-soft); padding: .08em .3em; border-radius: 3px; }
+pre { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: .9rem 1rem; overflow-x: auto; font: 400 .85rem/1.55 var(--font-mono); }
+pre code { background: none; padding: 0; }
+.formula { font-family: var(--font-display); font-size: 1.15rem; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: .8rem 1rem; overflow-x: auto; white-space: nowrap; }
+.formula sub, .formula sup { font-size: .7em; }
+ul, ol { margin: 0; padding-left: 1.3rem; display: grid; gap: .35rem; max-width: 65ch; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: .45rem .6rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: .8rem; letter-spacing: .04em; text-transform: uppercase; }
+td.num, th.num { text-align: right; }
+.status { display: inline-block; font: 600 .75rem/1 var(--font-body); padding: .3rem .5rem; border-radius: 999px; white-space: nowrap; }
+.status.ok { color: var(--ok); border: 1px solid var(--ok); }
+.status.open { color: var(--open); border: 1px solid var(--open); }
+.note { border-left: 3px solid var(--accent); padding: .2rem 0 .2rem 1rem; color: var(--fg); }
+.note strong { color: var(--accent); }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; }
+.two > * { min-width: 0; }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1rem; display: grid; gap: .5rem; }
+.box h3 { font-size: 1rem; }
+.bad h3 { color: var(--open); }
+.good h3 { color: var(--ok); }
+
+/* Stundenplan-Raster */
+.plan { border-collapse: separate; border-spacing: 3px; width: 100%; min-width: 26rem; }
+.plan th { text-align: center; padding: .2rem; border: 0; }
+.plan th.row { text-align: right; font-family: var(--font-mono); text-transform: none; letter-spacing: 0; padding-right: .5rem; }
+.plan td { text-align: center; font: 600 .82rem/1 var(--font-mono); padding: .55rem .2rem; border: 0; border-radius: 3px; color: var(--fg); }
+.plan tr.r2 td { opacity: .92; }
+.legend { display: flex; flex-wrap: wrap; gap: .5rem 1rem; font-size: .85rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: .35rem; }
+.legend i { width: .9rem; height: .9rem; border-radius: 2px; display: inline-block; }
+.heat td { text-align: center; font: 600 .9rem/1 var(--font-mono); border-radius: 3px; padding: .6rem .2rem; border: 0; }
+.heat { border-collapse: separate; border-spacing: 3px; min-width: 22rem; }
+.heat th { text-align: center; border: 0; }
+
+/* Mini-Diagramme parallel / aufeinanderfolgend */
+.mini { display: grid; grid-template-columns: auto repeat(2, 2.4rem); gap: 3px; font: 600 .75rem/1 var(--font-mono); align-items: center; width: max-content; }
+.mini b { font-weight: 600; color: var(--muted); text-align: right; padding-right: .3rem; }
+.mini .h { text-align: center; color: var(--muted); }
+.mini .c { height: 1.6rem; border-radius: 3px; background: var(--heat-lo); border: 1px solid var(--line); }
+.mini .c.on { background: var(--c-MB); border-color: transparent; }
+.mini .c.inf { background: var(--c-INF); border-color: transparent; }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: .75rem 1rem; }
+details + details { margin-top: .5rem; }
+summary { cursor: pointer; font-weight: 600; }
+summary:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+details[open] summary { margin-bottom: .5rem; }
+details p + p { margin-top: .5rem; }
+a { color: var(--accent); }
+nav ol { font-size: .95rem; columns: 2 14rem; display: block; }
+nav li { margin-bottom: .25rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">KI-Methoden · CSP-Prüfungsleistung · Stand 10.10.2026</div>
+  <h1>Prüfungsraum-CSP Gruppe C</h1>
+  <p class="lead">Wie unser Notebook die 40 Raum-Zeit-Slots jeder Prüfungswoche verteilt: vom Modell über die Constraints aus 4.2 bis 4.4 bis zum fertigen Plan.</p>
+</header>
+
+<nav aria-label="Inhalt">
+  <ol>
+    <li><a href="#stand">Wo wir stehen</a></li>
+    <li><a href="#modell">Das Modell (4.1)</a></li>
+    <li><a href="#bedarf">Bedarf pro Woche und Tag (4.2)</a></li>
+    <li><a href="#cpsat">Warum CP-SAT</a></li>
+    <li><a href="#popularitaet">Popularität (4.3)</a></li>
+    <li><a href="#struktur">Parallel und aufeinanderfolgend (4.4)</a></li>
+    <li><a href="#code">Der Code in Reihenfolge</a></li>
+    <li><a href="#ergebnis">Ergebnis Woche 1</a></li>
+    <li><a href="#selbsttest">Selbsttest</a></li>
+  </ol>
+</nav>
+
+<section id="stand">
+  <h2>Wo wir stehen</h2>
+  <p>Die Aufgabe hat zehn Teile. Das Grundmodell und alle Constraints bis 4.4 stehen und laufen. Offen sind die restlichen Pflicht-Constraints aus 4.5 und alle Analyseteile.</p>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Teil</th><th>Inhalt</th><th>Stand</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">4.1</td><td>Problemanalyse, CSP = (X, D, C)</td><td><span class="status ok">fertig</span></td></tr>
+      <tr><td class="mono">4.2</td><td>Bedarf pro Woche und pro Tag</td><td><span class="status ok">fertig</span></td></tr>
+      <tr><td class="mono">4.3</td><td>Faire Verteilung attraktiver Termine</td><td><span class="status ok">fertig</span></td></tr>
+      <tr><td class="mono">4.4</td><td>Parallele und aufeinanderfolgende Termine</td><td><span class="status ok">fertig</span></td></tr>
+      <tr><td class="mono">4.5</td><td>Übergang D → A verbieten, „jeder relevante Tag“</td><td><span class="status open">offen</span></td></tr>
+      <tr><td class="mono">4.6</td><td>Automatische Prüfung aller Constraints</td><td><span class="status open">offen</span></td></tr>
+      <tr><td class="mono">4.7–4.9</td><td>Lösungsraum, Experiment, Unlösbarkeit</td><td><span class="status open">offen</span></td></tr>
+      <tr><td class="mono">4.10, 5</td><td>Reflexion, GenAI-Dokumentation</td><td><span class="status open">offen</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="modell">
+  <h2><span class="tag">4.1</span> Das Modell</h2>
+  <p>Ein CSP besteht aus drei Teilen: <strong>X</strong> (Variablen), <strong>D</strong> (Domänen, also erlaubte Werte) und <strong>C</strong> (Constraints, also Bedingungen). Für jede der drei Wochen bauen wir ein eigenes CSP, weil die Wochen nichts miteinander zu tun haben.</p>
+
+  <div class="two">
+    <div class="box">
+      <h3>X: 40 Variablen</h3>
+      <p>Eine Variable pro Kombination aus Tag, Zeitslot und Raum: 5 × 4 × 2 = 40. Im Code heißen sie <code>Mo_A_R1</code> bis <code>Fr_D_R2</code>.</p>
+    </div>
+    <div class="box">
+      <h3>D: Studiengänge der Woche</h3>
+      <p>Jede Variable darf nur einen Studiengang annehmen, der in dieser Woche prüft. Woche 2: {ET, MB, MT, DS}.</p>
+    </div>
+  </div>
+
+  <p>Eine Lösung ist also eine Belegung wie <code>Mo_A_R1 = MB</code>, <code>Mo_A_R2 = MT</code> usw. für alle 40 Slots. Ein Tag hat 4 Zeitslots, aber wegen der 2 Räume <strong>8 Raum-Zeit-Slots</strong>.</p>
+
+  <h3>Warum der Slot die Variable ist und nicht der Studiengang</h3>
+  <div class="two">
+    <div class="box bad">
+      <h3>Verworfen: Studiengang = Variable</h3>
+      <p>Eine Variable bekommt genau einen Wert. MB bräuchte aber 16 Slots. Man müsste Mengen von Slots als Werte zulassen: für MB etwa 6,3 · 10<sup>10</sup> Möglichkeiten, dazu Regeln gegen Doppelbelegung.</p>
+    </div>
+    <div class="box good">
+      <h3>Gewählt: Slot = Variable</h3>
+      <p>Jeder Slot hat automatisch genau einen Studiengang (Pflicht-Constraint 1 gratis). Die Domäne erledigt Pflicht-Constraint 2. Tag, Zeit und Raum stehen im Namen, damit sind alle weiteren Regeln leicht formulierbar.</p>
+    </div>
+  </div>
+
+  <h3>Constraints im Überblick</h3>
+  <div class="scroll">
+  <table>
+    <thead><tr><th></th><th>Bedingung</th><th>Reichweite</th><th>Stand</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">C1</td><td>Ein Slot hat genau einen Studiengang</td><td>einzelner Slot</td><td><span class="status ok">durch Modell</span></td></tr>
+      <tr><td class="mono">C2</td><td>Nur Studiengänge der Woche</td><td>einzelner Slot</td><td><span class="status ok">durch Domäne</span></td></tr>
+      <tr><td class="mono">C3</td><td>Bedarf pro Woche</td><td>global, 40 Slots</td><td><span class="status ok">fertig</span></td></tr>
+      <tr><td class="mono">C4</td><td>Bedarf pro Tag</td><td>8 Slots je Tag</td><td><span class="status ok">fertig</span></td></tr>
+      <tr><td class="mono">C5</td><td>Faire mittlere Popularität</td><td>global, 40 Slots</td><td><span class="status ok">fertig</span></td></tr>
+      <tr><td class="mono">C6</td><td>Parallele Termine nach Gruppenzahl</td><td>lokal, 2 Slots</td><td><span class="status ok">fertig</span></td></tr>
+      <tr><td class="mono">C7</td><td>Aufeinanderfolgende Termine nach Gruppenzahl</td><td>lokal, 2–4 Slots</td><td><span class="status ok">fertig</span></td></tr>
+      <tr><td class="mono">C8</td><td>An jedem relevanten Tag vertreten</td><td>8 Slots je Tag</td><td><span class="status open">teilweise</span></td></tr>
+      <tr><td class="mono">C9</td><td>Kein Slot D gefolgt von Slot A am nächsten Tag</td><td>lokal, 4 Slots</td><td><span class="status open">offen</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="note"><strong>Merksatz:</strong> C1 und C2 kosten nichts, weil sie in X und D stecken. C6, C7 und C9 verknüpfen wenige benachbarte Slots. C3, C4, C5 und C8 sind Zählbedingungen über viele Slots und schränken am stärksten ein.</p>
+</section>
+
+<section id="bedarf">
+  <h2><span class="tag">4.2</span> Bedarf pro Woche und pro Tag</h2>
+  <p>Ein Studiengang mit mehr Kursgruppen soll mehr Slots bekommen. Sein Anteil hängt nur von den Studiengängen derselben Woche ab:</p>
+  <div class="formula">q<sub>s</sub> = g<sub>s</sub> / Σ<sub>j ∈ W</sub> g<sub>j</sub></div>
+  <p>Daraus wird ein ganzzahliger Bereich, einmal für die 40 Slots der Woche, einmal für die 8 Slots eines Tages:</p>
+  <div class="formula">⌊40 · q<sub>s</sub>⌋ ≤ Slots pro Woche ≤ ⌈40 · q<sub>s</sub>⌉ &nbsp;&nbsp;·&nbsp;&nbsp; ⌊8 · q<sub>s</sub>⌋ ≤ Slots pro Tag ≤ ⌈8 · q<sub>s</sub>⌉</div>
+
+  <h3>Durchgerechnet für Woche 2 (Σ g = 18)</h3>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Studiengang</th><th class="num">g</th><th class="num">q</th><th class="num">40 · q</th><th class="num">Woche</th><th class="num">8 · q</th><th class="num">Tag</th></tr></thead>
+    <tbody>
+      <tr><td>MB</td><td class="num">8</td><td class="num">0,444</td><td class="num">17,78</td><td class="num">17–18</td><td class="num">3,56</td><td class="num">3–4</td></tr>
+      <tr><td>MT</td><td class="num">4</td><td class="num">0,222</td><td class="num">8,89</td><td class="num">8–9</td><td class="num">1,78</td><td class="num">1–2</td></tr>
+      <tr><td>DS</td><td class="num">4</td><td class="num">0,222</td><td class="num">8,89</td><td class="num">8–9</td><td class="num">1,78</td><td class="num">1–2</td></tr>
+      <tr><td>ET</td><td class="num">2</td><td class="num">0,111</td><td class="num">4,44</td><td class="num">4–5</td><td class="num">0,89</td><td class="num">0–1</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <ul>
+    <li><strong>Warum ein Bereich?</strong> Es gibt nur ganze Slots. 17,78 Slots kann man nicht vergeben. Abrunden und Aufrunden ergibt den engsten fairen Bereich: niemand weicht mehr als einen Slot von seinem exakten Anteil ab.</li>
+    <li><strong>Warum pro Tag?</strong> Ohne Tagesgrenze bekam ein Studiengang ganze Tage (DS nur dienstags). Die Tagesgrenze verhindert das. Sie hängt wie gefordert von der eigenen Größe (Zähler) und den anderen Studiengängen (Nenner) ab.</li>
+    <li><strong>Immer erfüllbar:</strong> Die exakten Anteile summieren sich zu 40 bzw. 8. Deshalb passen Unter- und Obergrenzen zusammen.</li>
+    <li><strong>Woche 1 ist exakt:</strong> Σ g = 20, also genau 2 Slots pro Gruppe. MB bekommt genau 16, es gibt keinen Spielraum.</li>
+  </ul>
+  <pre><code>def demand_bounds(week_df, n_slots=N_SLOTS):   # n_slots=40 für die Woche, 8 für den Tag
+    groups = dict(zip(week_df["study_program"],
+                      week_df["course_groups"] * week_df["cohorts"]))
+    total = sum(groups.values())
+    return {s: (math.floor(g / total * n_slots),
+                math.ceil(g / total * n_slots))
+            for s, g in groups.items()}</code></pre>
+</section>
+
+<section id="cpsat">
+  <h2>Warum wir zu CP-SAT gewechselt sind</h2>
+  <p>Zuerst lief alles mit <code>python-constraint</code> aus den Übungen. Mit den Tagesgrenzen fand dessen Backtracking-Solver für Woche 1 auch nach zwei Minuten keine Lösung, obwohl es eine gibt.</p>
+  <p>Der Grund: Für eine Zählbedingung sind die 8 Slots eines Tages austauschbar. Merkt der Solver spät einen Fehler, probiert er alle Vertauschungen der vorherigen Tage durch. CP-SAT (OR-Tools) rechnet dagegen mit Summen und schließt ganze Bereiche auf einmal aus. Jede Woche ist in rund 20 ms gelöst.</p>
+  <h3>Gleiches Modell, andere Schreibweise</h3>
+  <p>Die Idee „Slot bekommt einen Studiengang“ bleibt. CP-SAT arbeitet aber mit Ja/Nein-Variablen: <code>x[v, s] = 1</code> heißt „Slot v gehört Studiengang s“.</p>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Bedingung</th><th>CP-SAT</th></tr></thead>
+    <tbody>
+      <tr><td>Jeder Slot hat genau einen Studiengang</td><td><code>AddExactlyOne(x[v, s] for s in programs)</code></td></tr>
+      <tr><td>MB hat 17 bis 18 Slots</td><td><code>AddLinearConstraint(sum(x[v, "MB"] for v in variables), 17, 18)</code></td></tr>
+      <tr><td>MB hat montags 3 bis 4 Slots</td><td>dieselbe Summe, nur über die 8 Montags-Slots</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="popularitaet">
+  <h2><span class="tag">4.3</span> Faire Verteilung attraktiver Termine</h2>
+  <p>Jeder Termin bekommt einen Popularitätswert. Wir addieren Tages- und Slotwert aus <code>preferences.json</code>:</p>
+  <div class="formula">p(d, t) = Tageswert(d) + Slotwert(t)</div>
+  <div class="scroll">
+    <table class="heat" id="heat" aria-label="Popularität je Tag und Zeitslot"></table>
+  </div>
+  <p>Über alle 40 Slots liegt der Durchschnitt bei <strong>p̄ = 266 / 40 = 6,65</strong>.</p>
+
+  <h3>Die Regel</h3>
+  <p>Die durchschnittliche Popularität der Slots eines Studiengangs darf höchstens um τ = 0,5 vom Wochenmittel abweichen, also zwischen 6,15 und 7,15 liegen.</p>
+  <ul>
+    <li><strong>Fair zum Bedarf:</strong> MB hat 16 Slots und bekommt dadurch absolut mehr gute Termine als INF mit 2. Pro Slot sind beide aber gleich gut gestellt. Genau das verlangt die Aufgabe: kein systematischer Vorteil oder Nachteil.</li>
+    <li><strong>Warum das Wochenmittel?</strong> Alle 40 Slots werden vergeben. Liegt ein Studiengang klar darüber, muss ein anderer darunter liegen.</li>
+    <li><strong>Für CP-SAT umgeformt:</strong> Ein Durchschnitt ist ein Bruch. Mit 40 · n<sub>s</sub> multipliziert wird daraus eine lineare Bedingung mit ganzen Zahlen: |Σ (40 · p(v) − 266) · x[v, s]| ≤ 40 · τ · n<sub>s</sub>.</li>
+  </ul>
+
+  <h3>Warum τ = 0,5</h3>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>τ</th><th>Woche 1</th><th>Woche 2</th><th>Woche 3</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">0</td><td><span class="status open">unlösbar</span></td><td><span class="status open">unlösbar</span></td><td><span class="status open">unlösbar</span></td></tr>
+      <tr><td class="mono">0,1</td><td><span class="status open">unlösbar</span></td><td><span class="status ok">lösbar</span></td><td><span class="status ok">lösbar</span></td></tr>
+      <tr><td class="mono">0,25</td><td><span class="status ok">lösbar</span></td><td><span class="status ok">lösbar</span></td><td><span class="status ok">lösbar</span></td></tr>
+      <tr><td class="mono">0,5</td><td><span class="status ok">lösbar</span></td><td><span class="status ok">lösbar</span></td><td><span class="status ok">lösbar</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="note"><strong>Der Engpass ist INF.</strong> INF hat nur 2 Slots, die Summe ihrer Popularität ist also eine ganze Zahl und der Mittelwert ändert sich in Schritten von 0,5. Bei τ = 0,1 müsste die Summe zwischen 13,1 und 13,5 liegen, und das geht nicht. Mit τ = 0,5 ist für jeden Studiengang immer ein Wert erreichbar. Das ist guter Stoff für Teil 4.9.</p>
+</section>
+
+<section id="struktur">
+  <h2><span class="tag">4.4</span> Parallele und aufeinanderfolgende Termine</h2>
+  <div class="two">
+    <div class="box">
+      <h3>Parallel</h3>
+      <div class="mini" aria-label="Beispiel parallel: MB hat Slot A in beiden Räumen">
+        <span></span><span class="h">R1</span><span class="h">R2</span>
+        <b>A</b><span class="c on"></span><span class="c on"></span>
+        <b>B</b><span class="c"></span><span class="c"></span>
+      </div>
+      <p>Gleicher Tag, gleicher Zeitslot, beide Räume. Zwei Gruppen schreiben gleichzeitig.</p>
+    </div>
+    <div class="box">
+      <h3>Aufeinanderfolgend</h3>
+      <div class="mini" aria-label="Beispiel aufeinanderfolgend: MB hat Slot A und Slot B">
+        <span></span><span class="h">R1</span><span class="h">R2</span>
+        <b>A</b><span class="c on"></span><span class="c"></span>
+        <b>B</b><span class="c"></span><span class="c on"></span>
+      </div>
+      <p>Gleicher Tag, direkt folgende Zeitslots (A–B, B–C, C–D). Der Raum ist egal, für die Gruppen zählt die Zeit.</p>
+    </div>
+  </div>
+
+  <h3>Was der Datensatz daraus macht</h3>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Gruppen</th><th>Datensatz</th><th>Unsere Regel</th><th>Betrifft</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>beides <code>allowed: false</code></td><td>kein paralleler und kein aufeinanderfolgender Termin</td><td>INF</td></tr>
+      <tr><td>2</td><td>beides erlaubt, Präferenz 0 / 0</td><td>keine Einschränkung</td><td>ET</td></tr>
+      <tr><td>≥ 3</td><td>parallel 6, aufeinanderfolgend 3</td><td>(a) parallel ≥ aufeinanderfolgend<br>(b) mind. die Hälfte der Slots in Parallelpaaren</td><td>alle anderen</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <ul>
+    <li><strong>(a)</strong> Parallel ist laut Datensatz attraktiver (6 &gt; 3), soll also mindestens so oft vorkommen. Aufeinanderfolgend bleibt erlaubt.</li>
+    <li><strong>(b)</strong> Ohne Mindestzahl wäre (a) schon mit 0 = 0 erfüllt. Für MB mit 16 Slots heißt das: mindestens 16 · 0,5 / 2 = 4 Parallelpaare.</li>
+    <li><strong>Warum die Hälfte und nicht 2/3?</strong> 6 / (6 + 3) = 2/3 wäre naheliegend, macht Woche 1 und 3 aber unlösbar. ES hat 6 Slots und pro Tag höchstens 2. Nur an einem Tag kann ES also 2 Slots haben, das ergibt höchstens 1 Parallelpaar. 2/3 würde 2 verlangen. Hier kollidieren Tagesgrenze (C4) und Parallelregel (C6), wieder ein Kandidat für 4.9.</li>
+  </ul>
+
+  <h3>Wie CP-SAT „parallel“ erkennt</h3>
+  <p>Pro Tag, Zeitslot und Studiengang entstehen Hilfsvariablen:</p>
+  <pre><code>par  = min(x[R1], x[R2])        # 1, wenn s beide Räume hat
+used = max(x[R1], x[R2])        # 1, wenn s mind. einen Raum hat
+seq  = min(used[t], used[t+1])  # 1, wenn s zwei Zeitslots hintereinander hat</code></pre>
+  <p>Danach sind die Regeln einfache Summen, z. B. <code>sum(parallel) == 0</code> für INF oder <code>sum(parallel) &gt;= sum(sequential)</code> für MB.</p>
+</section>
+
+<section id="code">
+  <h2>Der Code in Reihenfolge</h2>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Baustein</th><th>Aufgabe</th></tr></thead>
+    <tbody>
+      <tr><td><code>variables</code>, <code>N_SLOTS</code>, <code>SLOTS_PER_DAY</code></td><td>die 40 Slot-Namen, 40 und 8</td></tr>
+      <tr><td><code>demand_bounds(week_df, n_slots)</code></td><td>Unter- und Obergrenze je Studiengang für Woche oder Tag</td></tr>
+      <tr><td><code>popularity(day, slot)</code>, <code>pop</code>, <code>POP_TOL</code></td><td>p(d, t) je Slot und die Toleranz 0,5</td></tr>
+      <tr><td><code>structure_rule(g)</code>, <code>PAR_SHARE</code></td><td>passende Regel aus <code>preferences.json</code> zur Gruppenzahl, Mindestanteil 0,5</td></tr>
+      <tr><td><code>add_demand_constraints</code></td><td>C3 und C4</td></tr>
+      <tr><td><code>add_popularity_constraints</code></td><td>C5</td></tr>
+      <tr><td><code>add_structure_constraints</code></td><td>C6 und C7</td></tr>
+      <tr><td><code>build_csp(week)</code></td><td>legt <code>x[v, s]</code> an, C1 per <code>AddExactlyOne</code>, ruft die drei <code>add_…</code> auf</td></tr>
+      <tr><td><code>solve(model, x)</code></td><td>löst und gibt <code>{"Mo_A_R1": "MB", …}</code> zurück</td></tr>
+      <tr><td><code>show_plan</code>, <code>slots_per_day</code>, <code>summary</code></td><td>Plan, Tagesverteilung und Kennzahlen als Tabellen</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="ergebnis">
+  <h2>Ergebnis Woche 1</h2>
+  <p>Eine zulässige Lösung aus unserem Lauf. CP-SAT kann beim nächsten Lauf eine andere, ebenso zulässige Lösung liefern.</p>
+  <div class="scroll">
+    <table class="plan" id="plan" aria-label="Belegungsplan Woche 1"></table>
+  </div>
+  <div class="legend" id="legend"></div>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Studiengang</th><th class="num">Slots</th><th class="num">mittl. Popularität</th><th class="num">parallel</th><th class="num">aufeinanderfolgend</th></tr></thead>
+    <tbody>
+      <tr><td>MB</td><td class="num">16</td><td class="num">6,56</td><td class="num">5</td><td class="num">3</td></tr>
+      <tr><td>MT</td><td class="num">8</td><td class="num">6,88</td><td class="num">2</td><td class="num">1</td></tr>
+      <tr><td>DS</td><td class="num">8</td><td class="num">6,75</td><td class="num">2</td><td class="num">1</td></tr>
+      <tr><td>ES</td><td class="num">6</td><td class="num">6,50</td><td class="num">1</td><td class="num">0</td></tr>
+      <tr><td>INF</td><td class="num">2</td><td class="num">6,50</td><td class="num">0</td><td class="num">0</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <ul>
+    <li>Alle Slotzahlen treffen den Wochenbedarf exakt (Woche 1 hat keinen Spielraum).</li>
+    <li>Alle Mittelwerte liegen zwischen 6,15 und 7,15.</li>
+    <li>INF (1 Gruppe) hat Mo D und Mi C: nicht parallel, nicht hintereinander.</li>
+    <li>Bei MB, MT, DS und ES gilt parallel ≥ aufeinanderfolgend, und die Mindestzahl an Parallelpaaren ist erreicht.</li>
+    <li><strong>Noch verletzt: Übergang D → A (C9).</strong> DS hat Mo D und direkt danach Di A, MB hat Do D und Fr A. Genau das verbietet 4.5. Der Plan ist deshalb erst nach C9 vollständig zulässig.</li>
+  </ul>
+</section>
+
+<section id="selbsttest">
+  <h2>Selbsttest</h2>
+  <p>Fragen, die in der Prüfung kommen könnten. Erst selbst beantworten, dann aufklappen.</p>
+  <details>
+    <summary>Warum braucht C1 keinen eigenen Constraint?</summary>
+    <p>Jede Variable steht für genau einen Raum zu einer Zeit und hat genau einen Wert. Zwei Studiengänge im selben Slot sind damit gar nicht darstellbar. In CP-SAT erzwingt <code>AddExactlyOne</code> dasselbe für die Ja/Nein-Variablen.</p>
+  </details>
+  <details>
+    <summary>Warum ⌊ ⌋ und ⌈ ⌉ statt Runden auf eine feste Zahl?</summary>
+    <p>Gerundete Werte summieren sich nicht immer zu 40. Dann wäre das CSP unlösbar, obwohl die Verteilung fair wäre. Der Bereich lässt dem Solver genau einen Slot Spielraum.</p>
+  </details>
+  <details>
+    <summary>Woher kommt der tägliche Bedarf, und warum hängt er von den anderen Studiengängen ab?</summary>
+    <p>Er ist derselbe Anteil q<sub>s</sub>, nur auf 8 statt 40 Slots bezogen. q<sub>s</sub> enthält im Nenner die Gruppen aller Studiengänge der Woche. Kommt ein großer Studiengang dazu, sinkt der Tagesanteil aller anderen.</p>
+  </details>
+  <details>
+    <summary>Ist die Popularität eine Zielfunktion?</summary>
+    <p>Nein. Wir maximieren nichts. Die Popularität legt nur fest, welche Lösungen zulässig sind: Jeder Studiengang muss im Mittel nah am Wochenmittel liegen. Alle Lösungen, die das erfüllen, sind gleichwertig.</p>
+  </details>
+  <details>
+    <summary>Was passiert, wenn man τ auf 0,1 setzt?</summary>
+    <p>Woche 1 wird unlösbar, weil INF mit 2 Slots nur Mittelwerte in 0,5er-Schritten erreichen kann. Woche 2 und 3 bleiben lösbar, weil dort kein Studiengang so wenige Slots hat.</p>
+  </details>
+  <details>
+    <summary>Warum wurde python-constraint ersetzt?</summary>
+    <p>Sein einfaches Backtracking erkennt Konflikte bei Zählbedingungen spät und probiert dann viele gleichwertige Vertauschungen durch. Woche 1 war mit Tagesgrenzen nach zwei Minuten nicht gelöst. CP-SAT arbeitet mit Summen und schließt Bereiche direkt aus.</p>
+  </details>
+  <details>
+    <summary>Warum mindestens die Hälfte der Slots parallel und nicht 2/3?</summary>
+    <p>2/3 entspräche dem Verhältnis 6 : 3 aus dem Datensatz, kollidiert aber mit der Tagesgrenze. ES darf pro Tag höchstens 2 Slots haben und hat insgesamt nur 6. Damit ist höchstens ein Parallelpaar möglich, 2/3 würde zwei verlangen.</p>
+  </details>
+</section>
+
+</div>
+<script>
+(function () {
+  var days = ["Mo", "Di", "Mi", "Do", "Fr"];
+  var dayPref = [5, 4, 4, 3, 1];
+  var slots = [["A", "08:00", 4], ["B", "10:30", 5], ["C", "13:00", 2], ["D", "15:30", 2]];
+
+  // Popularitäts-Heatmap
+  var heat = document.getElementById("heat");
+  var h = "<thead><tr><th></th>" + days.map(function (d, i) { return "<th>" + d + " (" + dayPref[i] + ")</th>"; }).join("") + "</tr></thead><tbody>";
+  slots.forEach(function (s) {
+    h += "<tr><th class=\"mono\">" + s[0] + " (" + s[2] + ")</th>";
+    dayPref.forEach(function (dp) {
+      var p = dp + s[2];
+      var pct = Math.round((p - 3) / 7 * 100);
+      var strong = pct > 55;
+      h += "<td style=\"background: color-mix(in srgb, var(--heat-hi) " + pct + "%, var(--heat-lo)); color: " + (strong ? "var(--bg)" : "var(--fg)") + "\">" + p + "</td>";
+    });
+    h += "</tr>";
+  });
+  heat.innerHTML = h + "</tbody>";
+
+  // Belegungsplan Woche 1
+  var plan = {
+    "A R1": ["MT", "MB", "DS", "DS", "MB"], "A R2": ["MT", "DS", "DS", "DS", "MB"],
+    "B R1": ["MB", "MB", "MB", "MT", "ES"], "B R2": ["MB", "MT", "ES", "MT", "DS"],
+    "C R1": ["MB", "ES", "MT", "MB", "MT"], "C R2": ["ES", "ES", "INF", "MB", "DS"],
+    "D R1": ["INF", "MB", "MB", "ES", "MB"], "D R2": ["DS", "MB", "MB", "MB", "MT"]
+  };
+  var t = "<thead><tr><th></th>" + days.map(function (d) { return "<th>" + d + "</th>"; }).join("") + "</tr></thead><tbody>";
+  Object.keys(plan).forEach(function (k) {
+    t += "<tr class=\"" + (k.slice(-2) === "R2" ? "r2" : "") + "\"><th class=\"row\">" + k + "</th>";
+    plan[k].forEach(function (sg) { t += "<td style=\"background: var(--c-" + sg + ")\">" + sg + "</td>"; });
+    t += "</tr>";
+  });
+  document.getElementById("plan").innerHTML = t + "</tbody>";
+  document.getElementById("legend").innerHTML = ["MB", "MT", "DS", "ES", "INF"].map(function (s) {
+    return "<span><i style=\"background: var(--c-" + s + ")\"></i>" + s + "</span>";
+  }).join("");
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kästchen oder Karten</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,600;1,400&family=STIX+Two+Text:ital@0;1&display=swap">
+<style>
+/* Layout: Stundenplan-Raster – linksbündige Spalte, Prüfungsraster als zentrales Bild */
+:root {
+  --bg: #f5f7f9;
+  --surface: #ffffff;
+  --fg: #16202b;
+  --muted: #586776;
+  --line: #d6dde4;
+  --accent: #c2562b;
+  --accent-soft: #f6e3d9;
+  --ok: #247a5c;
+  --warn: #b2401f;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --font-body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --font-math: "STIX Two Text", "Cambria Math", "Times New Roman", serif;
+  --c-MB: #2f6fb3; --t-MB: #ffffff;
+  --c-DS: #b8502a; --t-DS: #ffffff;
+  --c-MT: #247a5c; --t-MT: #ffffff;
+  --c-ES: #7d55b8; --t-ES: #ffffff;
+  --c-INF: #e0ad2c; --t-INF: #1d1808;
+  --c-ET: #b83a72; --t-ET: #ffffff;
+  --c-WIW: #3f7280; --t-WIW: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161c; --surface: #19212a; --fg: #e4e9ee; --muted: #9aa8b5; --line: #2c3743;
+    --accent: #e8814f; --accent-soft: #3a2519; --ok: #5cc49c; --warn: #f08a63;
+    --c-MB: #3d7cc2; --c-DS: #c25e36; --c-MT: #2e8a69; --c-ES: #8a63c7; --c-INF: #e0ad2c; --c-ET: #c44a80; --c-WIW: #4d8291;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161c; --surface: #19212a; --fg: #e4e9ee; --muted: #9aa8b5; --line: #2c3743;
+  --accent: #e8814f; --accent-soft: #3a2519; --ok: #5cc49c; --warn: #f08a63;
+  --c-MB: #3d7cc2; --c-DS: #c25e36; --c-MT: #2e8a69; --c-ES: #8a63c7; --c-INF: #e0ad2c; --c-ET: #c44a80; --c-WIW: #4d8291;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.6; }
+.wrap { max-width: 980px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 80px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 56px; }
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.15; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 3.1rem); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 1.65rem; font-weight: 650; }
+h3 { font-size: 1.15rem; font-weight: 650; }
+p { margin: 0; max-width: 68ch; }
+section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; min-width: 0; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lede { font-size: 1.15rem; color: var(--muted); max-width: 62ch; }
+.muted { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 0.88em; }
+code { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+.math { font-family: var(--font-math); font-size: 1.12em; }
+.math i { font-style: italic; }
+.formula { font-family: var(--font-math); font-size: 1.25rem; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; overflow-x: auto; white-space: nowrap; }
+.frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 3px; }
+.frac > span:first-child { border-bottom: 1px solid currentColor; padding: 0 4px; }
+.frac > span:last-child { padding: 0 4px; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: 0.93rem; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.chip { display: inline-block; min-width: 2.6em; text-align: center; font-family: var(--font-mono); font-size: 0.8rem; font-weight: 600; padding: 1px 7px; border-radius: 4px; }
+.pill { display: inline-block; font-family: var(--font-mono); font-size: 0.72rem; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.pill.ok { color: var(--ok); }
+.pill.open { color: var(--warn); }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.cols > * { min-width: 0; }
+.note { border-left: 3px solid var(--accent); padding: 4px 0 4px 16px; max-width: 68ch; }
+ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 68ch; }
+
+/* Wochenraster */
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.tabs button { font: inherit; font-family: var(--font-mono); font-size: 0.85rem; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.tabs button:focus-visible, .toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.grid-scroll { overflow-x: auto; }
+.plan { display: grid; grid-template-columns: 74px repeat(5, minmax(96px, 1fr)); gap: 6px; min-width: 600px; }
+.plan .hd { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); text-align: center; padding-bottom: 2px; }
+.plan .slotlbl { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); display: flex; flex-direction: column; justify-content: center; line-height: 1.25; }
+.plan .slotlbl b { font-size: 1rem; color: var(--fg); }
+.cell { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; min-height: 52px; }
+.tile { border-radius: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: var(--font-mono); font-weight: 600; font-size: 0.86rem; line-height: 1.1; position: relative; }
+.tile small { font-weight: 400; font-size: 0.64rem; opacity: 0.85; }
+.tile.wide { grid-column: span 2; }
+.tile.flag { outline: 2.5px dashed var(--warn); outline-offset: 2px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 0.88rem; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+.toggle { font: inherit; font-size: 0.85rem; display: inline-flex; gap: 8px; align-items: center; cursor: pointer; }
+
+.dayplan { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 12px; }
+.daycard { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px; display: grid; gap: 5px; min-width: 0; }
+.daycard h4 { margin: 0 0 2px; font-family: var(--font-display); font-size: 1rem; font-weight: 650; }
+.drow { display: grid; grid-template-columns: 40px 1fr; gap: 6px; align-items: stretch; }
+.drow .sl { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); display: flex; flex-direction: column; justify-content: center; line-height: 1.2; }
+.drow .sl b { font-size: 0.92rem; color: var(--fg); }
+.drow .cell { min-height: 42px; }
+.drow .tile { font-size: 0.8rem; }
+
+@media (max-width: 520px) {
+  .wrap { padding-inline: 16px; gap: 44px; }
+  .formula { font-size: 1.05rem; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .tile { transition: transform .15s ease; }
+}
+
+/* Gegenüberstellung: zwei Spalten links "Kästchen" (Slot-Modell), rechts "Karten" (Bedarfseinheiten-Modell) */
+:root { --left: #2f6fb3; --right: #b8502a; --card: #fffdf8; --card-edge: #d9cdb8; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --left: #6aa2e0; --right: #ec8a5e; --card: #26211b; --card-edge: #4a3f31; } }
+:root[data-theme="dark"] { --left: #6aa2e0; --right: #ec8a5e; --card: #26211b; --card-edge: #4a3f31; }
+body { margin: 0; }
+
+.duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.duo > * { min-width: 0; }
+.side { display: grid; gap: 14px; align-content: start; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; border-top: 4px solid var(--tone); }
+.side.l { --tone: var(--left); }
+.side.r { --tone: var(--right); }
+.side .tag { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tone); }
+.side h3 { font-size: 1.35rem; }
+.question { font-family: var(--font-display); font-size: 1.05rem; padding: 10px 14px; border-radius: 8px; background: color-mix(in srgb, var(--tone) 10%, transparent); }
+.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 14px; font-size: 0.93rem; }
+.kv dt { font-family: var(--font-mono); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding-top: 2px; }
+.kv dd { margin: 0; }
+
+/* Mini-Wochenraster */
+.mini-plan { display: grid; grid-template-columns: 34px repeat(5, minmax(0, 1fr)); gap: 3px; font-family: var(--font-mono); font-size: 0.66rem; }
+.mini-plan .h { text-align: center; color: var(--muted); }
+.mini-plan .rl { color: var(--muted); display: flex; align-items: center; }
+.mini-plan .c { height: 26px; border-radius: 4px; border: 1.5px dashed var(--line); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.68rem; transition: background-color .25s ease, border-color .25s ease; }
+.mini-plan .c.filled { border-style: solid; border-color: transparent; }
+.mini-plan .c.now { outline: 2.5px solid var(--fg); outline-offset: 1px; }
+
+/* Karten */
+.deck { display: flex; flex-wrap: wrap; gap: 4px; }
+.cardx { font-family: var(--font-mono); font-size: 0.64rem; font-weight: 600; padding: 3px 5px; border-radius: 4px; background: var(--card); border: 1px solid var(--card-edge); border-left: 4px solid var(--sg); color: var(--fg); transition: opacity .25s ease; }
+.cardx.used { opacity: 0.25; }
+.cardx.now { outline: 2.5px solid var(--fg); outline-offset: 1px; }
+
+/* Schritt-Demo */
+.stepper { display: grid; gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.controls button { font: inherit; font-family: var(--font-mono); font-size: 0.85rem; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
+.controls button:focus-visible, .controls input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.controls input[type=range] { flex: 1 1 180px; accent-color: var(--accent); }
+.controls output { font-family: var(--font-mono); font-size: 0.85rem; min-width: 7.5em; }
+.counter { display: grid; gap: 4px; font-variant-numeric: tabular-nums; }
+.counter .big { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; color: var(--tone); line-height: 1.1; }
+.counter .small { font-size: 0.84rem; color: var(--muted); }
+
+.logbars { display: grid; gap: 10px; }
+.logrow { display: grid; grid-template-columns: 120px minmax(0, 1fr) 96px; gap: 10px; align-items: center; font-size: 0.86rem; }
+.logrow .track { height: 18px; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; position: relative; overflow: hidden; }
+.logrow .fill { position: absolute; inset: 0 auto 0 0; background: var(--tone); transition: width .25s ease; }
+.logrow .val { font-family: var(--font-mono); text-align: right; }
+.logscale { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); margin-left: 130px; margin-right: 106px; }
+
+/* Schalter-Matrix */
+.mats { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+.matfig { display: grid; gap: 8px; margin: 0; min-width: 0; }
+.matfig figcaption { font-size: 0.86rem; color: var(--muted); max-width: 34ch; }
+.matfig figcaption b { color: var(--fg); font-family: var(--font-mono); }
+.dots { display: grid; gap: 1px; }
+.dots i { width: 6px; height: 6px; border-radius: 1px; background: color-mix(in srgb, var(--fg) 12%, transparent); display: block; }
+.dots i.on { background: var(--tone); }
+
+/* Constraint-Vergleich */
+.cmp { display: grid; gap: 10px; }
+.cmp-row { display: grid; grid-template-columns: 200px minmax(0, 1fr) minmax(0, 1fr); gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.cmp-row > div { padding: 12px 14px; min-width: 0; }
+.cmp-row .what { font-family: var(--font-display); font-weight: 650; background: color-mix(in srgb, var(--fg) 4%, transparent); }
+.cmp-row .l { border-left: 3px solid var(--left); }
+.cmp-row .r { border-left: 3px solid var(--right); }
+.verdict { display: inline-block; font-family: var(--font-mono); font-size: 0.7rem; padding: 1px 8px; border-radius: 999px; margin-bottom: 4px; border: 1px solid currentColor; }
+.v-auto { color: var(--ok); }
+.v-easy { color: var(--muted); }
+.v-hard { color: var(--warn); }
+.cmp-row p { font-size: 0.9rem; }
+.side-lbl { display: none; font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.side-lbl.l { color: var(--left); }
+.side-lbl.r { color: var(--right); }
+
+/* Symmetrie */
+.sym { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); gap: 12px; align-items: center; }
+.sym .eq { font-family: var(--font-display); font-size: 1.6rem; color: var(--muted); text-align: center; }
+.sym figure { margin: 0; display: grid; gap: 6px; min-width: 0; }
+.sym figcaption { font-size: 0.8rem; color: var(--muted); }
+.slotrow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+.slotrow div { border: 1px dashed var(--line); border-radius: 5px; padding: 6px; display: grid; gap: 4px; justify-items: start; font-family: var(--font-mono); font-size: 0.66rem; color: var(--muted); }
+.result-cell { height: 30px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-weight: 600; font-size: 0.8rem; }
+
+.numbers { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.num { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 4px; border-top: 3px solid var(--tone); }
+.num .n { font-family: var(--font-display); font-size: 1.7rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.num .n sup { font-size: 0.6em; }
+.num .t { font-size: 0.86rem; color: var(--muted); }
+.l-tone { --tone: var(--left); }
+.r-tone { --tone: var(--right); }
+
+@media (max-width: 760px) {
+  .duo { grid-template-columns: minmax(0, 1fr); }
+  .cmp-row { grid-template-columns: minmax(0, 1fr); }
+  .cmp-row .l, .cmp-row .r { border-left: 0; border-top: 1px solid var(--line); }
+  .side-lbl { display: block; margin-bottom: 2px; }
+  .sym { grid-template-columns: minmax(0, 1fr); }
+  .sym .eq { transform: rotate(90deg); }
+  .logrow { grid-template-columns: 84px minmax(0, 1fr) 76px; font-size: 0.8rem; }
+  .logscale { margin-left: 94px; margin-right: 86px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mini-plan .c, .cardx, .logrow .fill { transition: none; }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header style="display:grid;gap:14px">
+    <div class="eyebrow">Prüfungsraum-CSP · Gruppe C · Modellierungsentscheidung</div>
+    <h1>Kästchen oder Karten</h1>
+    <p class="lede">Ein Prüfungsplan, zwei Arten, ihn als CSP aufzuschreiben. Links unser Ansatz: Jeder Raum-Zeit-Slot wählt einen Studiengang. Rechts die Alternative: Jede Bedarfseinheit eines Studiengangs wählt einen Slot. Alle Beispiele stammen aus Woche 1.</p>
+  </header>
+
+  <section>
+    <div class="duo">
+      <article class="side l">
+        <div class="tag">Unser Ansatz · Slot-Modell</div>
+        <h3>40 Kästchen werden eingefärbt</h3>
+        <div class="question">„Welcher Studiengang prüft <b>hier</b>?“</div>
+        <dl class="kv">
+          <dt>Variable</dt><dd>ein Slot, z. B. <code>Mo_A_R1</code></dd>
+          <dt>Domäne</dt><dd>{ES, INF, MB, MT, DS}, also 5 Werte</dd>
+          <dt>Lösung</dt><dd><code>Mo_A_R1 = MT</code></dd>
+        </dl>
+        <div class="mini-plan" id="heroL"></div>
+      </article>
+      <article class="side r">
+        <div class="tag">Alternative · Bedarfseinheiten-Modell</div>
+        <h3>40 Karten werden auf Kästchen gelegt</h3>
+        <div class="question">„In welchem Slot liegt <b>diese Bedarfseinheit</b>?“</div>
+        <dl class="kv">
+          <dt>Variable</dt><dd>eine Bedarfseinheit, z. B. <code>MB_3</code>: einer der 16 Slots, die MB zustehen</dd>
+          <dt>Domäne</dt><dd>{Mo_A_R1, …, Fr_D_R2}, also 40 Werte</dd>
+          <dt>Lösung</dt><dd><code>MB_3 = Mo_C_R1</code></dd>
+        </dl>
+        <div class="deck" id="heroDeck"></div>
+        <p class="muted" style="font-size:0.86rem">Eine Bedarfseinheit ist keine Kursgruppe: MB hat 8 Kursgruppen, aber einen Bedarf von 16 Slots und damit 16 Einheiten.</p>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Schritt für Schritt</div>
+    <h2>Wie viele Möglichkeiten hat jede Entscheidung?</h2>
+    <p>Schieb den Regler oder starte die Animation. Links wird bei jedem Schritt ein Kästchen eingefärbt, rechts wird eine Karte abgelegt. Darunter siehst du, wie schnell die Zahl der denkbaren Pläne wächst, solange noch kein Constraint aktiv ist.</p>
+    <div class="stepper">
+      <div class="controls">
+        <button type="button" id="play">▶ Abspielen</button>
+        <button type="button" id="reset">Zurücksetzen</button>
+        <input type="range" id="step" min="0" max="40" value="12" aria-label="Anzahl getroffener Entscheidungen">
+        <output id="stepOut" for="step"></output>
+      </div>
+      <div class="duo">
+        <div class="side l" style="padding:14px">
+          <div class="counter"><span class="small">nächste Entscheidung: ein Kästchen, Auswahl aus</span><span class="big">5 Studiengängen</span></div>
+          <div class="mini-plan" id="stepL"></div>
+        </div>
+        <div class="side r" style="padding:14px">
+          <div class="counter"><span class="small">nächste Entscheidung: eine Karte, Auswahl aus</span><span class="big">40 Slots</span></div>
+          <div class="mini-plan" id="stepR"></div>
+          <div class="deck" id="stepDeck"></div>
+        </div>
+      </div>
+      <div class="logbars">
+        <div class="logrow l-tone"><span>Kästchen 5<sup id="eL">k</sup></span><div class="track"><div class="fill" id="barL"></div></div><span class="val" id="valL"></span></div>
+        <div class="logrow r-tone"><span>Karten 40<sup id="eR">k</sup></span><div class="track"><div class="fill" id="barR"></div></div><span class="val" id="valR"></span></div>
+      </div>
+      <div class="logscale"><span>10⁰</span><span>10¹⁶</span><span>10³²</span><span>10⁴⁸</span><span>10⁶⁴</span></div>
+    </div>
+    <div class="numbers">
+      <div class="num l-tone"><span class="n">5<sup>40</sup> ≈ 9 · 10<sup>27</sup></span><span class="t">denkbare Pläne im Slot-Modell</span></div>
+      <div class="num r-tone"><span class="n">40<sup>40</sup> ≈ 1 · 10<sup>64</sup></span><span class="t">denkbare Pläne im Bedarfseinheiten-Modell</span></div>
+      <div class="num"><span class="n">10<sup>36</sup>-mal</span><span class="t">so groß ist der Suchraum rechts</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Innenleben in CP-SAT</div>
+    <h2>200 Schalter gegen 1600 Schalter</h2>
+    <p>CP-SAT rechnet nur mit 0 und 1. Jede Variable wird darum zu einer Zeile mit einem Schalter pro möglichem Wert, und genau einer davon ist an. Links hat jede Zeile 5 Schalter, rechts 40. Farbig sind die Schalter, die in der Lösung von Woche 1 an sind.</p>
+    <div class="mats">
+      <figure class="matfig l-tone"><div class="dots" id="matL"></div><figcaption><b>40 × 5 = 200</b><br>Zeilen = Slots, Spalten = Studiengänge</figcaption></figure>
+      <figure class="matfig r-tone"><div class="dots" id="matR"></div><figcaption><b>40 × 40 = 1600</b><br>Zeilen = Bedarfseinheiten, Spalten = Slots</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Austauschbare Karten</div>
+    <h2>Derselbe Plan, unzählige Male</h2>
+    <p>Im Bedarfseinheiten-Modell sind die Karten eines Studiengangs gleichwertig. Ob <code>MB_1</code> am Montag und <code>MB_2</code> am Dienstag liegt oder umgekehrt, ergibt im Plan dasselbe Bild. Für den Solver sind das trotzdem zwei verschiedene Lösungen.</p>
+    <div class="sym">
+      <figure>
+        <div class="slotrow"><div>Mo_B_R1<span class="cardx" style="--sg:var(--c-MB)">MB_1</span></div><div>Di_A_R1<span class="cardx" style="--sg:var(--c-MB)">MB_2</span></div></div>
+        <figcaption>Lösung 1</figcaption>
+      </figure>
+      <div class="eq">≠</div>
+      <figure>
+        <div class="slotrow"><div>Mo_B_R1<span class="cardx" style="--sg:var(--c-MB)">MB_2</span></div><div>Di_A_R1<span class="cardx" style="--sg:var(--c-MB)">MB_1</span></div></div>
+        <figcaption>Lösung 2 (Karten vertauscht)</figcaption>
+      </figure>
+      <div class="eq">→</div>
+      <figure>
+        <div class="slotrow"><div class="result-cell" style="background:var(--c-MB);color:var(--t-MB)">MB</div><div class="result-cell" style="background:var(--c-MB);color:var(--t-MB)">MB</div></div>
+        <figcaption>beides ergibt denselben Plan</figcaption>
+      </figure>
+    </div>
+    <div class="numbers">
+      <div class="num r-tone"><span class="n">≈ 4,9 · 10<sup>25</sup></span><span class="t">Kopien jedes Plans: 6! · 2! · 16! · 8! · 8!, also alle Vertauschungen innerhalb von ES, INF, MB, MT und DS</span></div>
+      <div class="num l-tone"><span class="n">0</span><span class="t">solche Kopien im Slot-Modell, weil ein Kästchen keine Nummer innerhalb eines Studiengangs hat</span></div>
+    </div>
+    <p class="note">Gegenmittel im Bedarfseinheiten-Modell: eine Ordnung erzwingen, also <code>MB_1 &lt; MB_2 &lt; … &lt; MB_16</code>. Das ist ein zusätzlicher Constraint, der nur die Modellierung reparieren soll. Auch das Slot-Modell hat eine kleinere Symmetrie: R1 und R2 sind gleich große Räume, Vertauschen ergibt fachlich denselben Plan.</p>
+  </section>
+
+  <section>
+    <div class="eyebrow">Constraint für Constraint</div>
+    <h2>Was wird leichter, was schwerer?</h2>
+    <div class="cmp" id="cmp"></div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Fazit</div>
+    <h2>Warum wir Kästchen färben</h2>
+    <div class="duo">
+      <div class="side l">
+        <h3>Slot-Modell</h3>
+        <ul>
+          <li>„Ein Raum, ein Studiengang“ ist automatisch erfüllt.</li>
+          <li>Kleine Domänen mit 4–5 Werten statt 40.</li>
+          <li>Tag, Zeit und Raum stehen im Variablennamen. Parallel, aufeinanderfolgend und D → A lassen sich direkt formulieren.</li>
+          <li>Flexible Slotzahl über die Grenzen lo–hi.</li>
+        </ul>
+      </div>
+      <div class="side r">
+        <h3>Bedarfseinheiten-Modell</h3>
+        <ul>
+          <li>Die Slotzahl pro Studiengang steckt in der Zahl der Karten, braucht aber eine feste Zahl.</li>
+          <li><code>AllDifferent</code> über 40 Variablen ist nötig.</li>
+          <li>Rund 10²⁵ austauschbare Kopien jeder Lösung, ohne Symmetriebrechung.</li>
+          <li>Für jede Struktur-Regel muss der Slot-Wert erst wieder zerlegt werden.</li>
+        </ul>
+      </div>
+    </div>
+    <p>Beide Modelle beschreiben dieselbe Aufgabe und hätten dieselben gültigen Pläne. Das Slot-Modell erfüllt die wichtigste Anforderung strukturell und macht die übrigen leichter formulierbar. Im Bedarfseinheiten-Modell ließe sich nur der Bedarf etwas einfacher ausdrücken.</p>
+  </section>
+</main>
+
+<script>
+const DATA = {"weeks":{"Woche 1":{"groups":{"ES":3,"INF":1,"MB":8,"MT":4,"DS":4},"bounds":{"ES":[6,6],"INF":[2,2],"MB":[16,16],"MT":[8,8],"DS":[8,8]},"day":{"ES":[1,2],"INF":[0,1],"MB":[3,4],"MT":[1,2],"DS":[1,2]},"sol":{"Mo_A_R1":"MT","Mo_A_R2":"MT","Mo_B_R1":"MB","Mo_B_R2":"MB","Mo_C_R1":"MB","Mo_C_R2":"ES","Mo_D_R1":"INF","Mo_D_R2":"DS","Di_A_R1":"MB","Di_A_R2":"DS","Di_B_R1":"MB","Di_B_R2":"MT","Di_C_R1":"ES","Di_C_R2":"ES","Di_D_R1":"MB","Di_D_R2":"MB","Mi_A_R1":"DS","Mi_A_R2":"DS","Mi_B_R1":"MB","Mi_B_R2":"ES","Mi_C_R1":"MT","Mi_C_R2":"INF","Mi_D_R1":"MB","Mi_D_R2":"MB","Do_A_R1":"DS","Do_A_R2":"DS","Do_B_R1":"MT","Do_B_R2":"MT","Do_C_R1":"MB","Do_C_R2":"MB","Do_D_R1":"ES","Do_D_R2":"MB","Fr_A_R1":"MB","Fr_A_R2":"MB","Fr_B_R1":"ES","Fr_B_R2":"DS","Fr_C_R1":"MT","Fr_C_R2":"DS","Fr_D_R1":"MB","Fr_D_R2":"MT"},"stats":[{"SG":"DS","Slots":8,"mittl. Popularität":6.75,"parallel":2,"aufeinanderfolgend":1},{"SG":"ES","Slots":6,"mittl. Popularität":6.5,"parallel":1,"aufeinanderfolgend":0},{"SG":"INF","Slots":2,"mittl. Popularität":6.5,"parallel":0,"aufeinanderfolgend":0},{"SG":"MB","Slots":16,"mittl. Popularität":6.56,"parallel":5,"aufeinanderfolgend":3},{"SG":"MT","Slots":8,"mittl. Popularität":6.88,"parallel":2,"aufeinanderfolgend":1}]},"Woche 2":{"groups":{"ET":2,"MB":8,"MT":4,"DS":4},"bounds":{"ET":[4,5],"MB":[17,18],"MT":[8,9],"DS":[8,9]},"day":{"ET":[0,1],"MB":[3,4],"MT":[1,2],"DS":[1,2]},"sol":{"Mo_A_R1":"MB","Mo_A_R2":"MB","Mo_B_R1":"MB","Mo_B_R2":"MT","Mo_C_R1":"ET","Mo_C_R2":"MB","Mo_D_R1":"DS","Mo_D_R2":"DS","Di_A_R1":"MT","Di_A_R2":"DS","Di_B_R1":"MB","Di_B_R2":"DS","Di_C_R1":"MB","Di_C_R2":"MB","Di_D_R1":"ET","Di_D_R2":"MT","Mi_A_R1":"MB","Mi_A_R2":"DS","Mi_B_R1":"MT","Mi_B_R2":"MB","Mi_C_R1":"MB","Mi_C_R2":"MB","Mi_D_R1":"ET","Mi_D_R2":"MT","Do_A_R1":"MB","Do_A_R2":"MB","Do_B_R1":"DS","Do_B_R2":"ET","Do_C_R1":"DS","Do_C_R2":"MB","Do_D_R1":"MT","Do_D_R2":"MT","Fr_A_R1":"MT","Fr_A_R2":"MT","Fr_B_R1":"MB","Fr_B_R2":"MB","Fr_C_R1":"MB","Fr_C_R2":"MB","Fr_D_R1":"DS","Fr_D_R2":"DS"},"stats":[{"SG":"DS","Slots":9,"mittl. Popularität":6.44,"parallel":2,"aufeinanderfolgend":2},{"SG":"ET","Slots":4,"mittl. Popularität":6.75,"parallel":0,"aufeinanderfolgend":0},{"SG":"MB","Slots":18,"mittl. Popularität":6.78,"parallel":6,"aufeinanderfolgend":6},{"SG":"MT","Slots":9,"mittl. Popularität":6.56,"parallel":2,"aufeinanderfolgend":0}]},"Woche 3":{"groups":{"WIW":5,"ET":2,"MB":8,"DS":4},"bounds":{"WIW":[10,11],"ET":[4,5],"MB":[16,17],"DS":[8,9]},"day":{"WIW":[2,3],"ET":[0,1],"MB":[3,4],"DS":[1,2]},"sol":{"Mo_A_R1":"MB","Mo_A_R2":"MB","Mo_B_R1":"WIW","Mo_B_R2":"WIW","Mo_C_R1":"ET","Mo_C_R2":"MB","Mo_D_R1":"DS","Mo_D_R2":"DS","Di_A_R1":"MB","Di_A_R2":"MB","Di_B_R1":"DS","Di_B_R2":"WIW","Di_C_R1":"MB","Di_C_R2":"MB","Di_D_R1":"WIW","Di_D_R2":"WIW","Mi_A_R1":"WIW","Mi_A_R2":"MB","Mi_B_R1":"DS","Mi_B_R2":"MB","Mi_C_R1":"ET","Mi_C_R2":"DS","Mi_D_R1":"WIW","Mi_D_R2":"MB","Do_A_R1":"WIW","Do_A_R2":"ET","Do_B_R1":"MB","Do_B_R2":"DS","Do_C_R1":"WIW","Do_C_R2":"DS","Do_D_R1":"MB","Do_D_R2":"MB","Fr_A_R1":"WIW","Fr_A_R2":"MB","Fr_B_R1":"ET","Fr_B_R2":"MB","Fr_C_R1":"DS","Fr_C_R2":"DS","Fr_D_R1":"MB","Fr_D_R2":"WIW"},"stats":[{"SG":"DS","Slots":9,"mittl. Popularität":6.33,"parallel":2,"aufeinanderfolgend":2},{"SG":"ET","Slots":4,"mittl. Popularität":6.5,"parallel":0,"aufeinanderfolgend":0},{"SG":"MB","Slots":16,"mittl. Popularität":6.75,"parallel":4,"aufeinanderfolgend":2},{"SG":"WIW","Slots":11,"mittl. Popularität":6.82,"parallel":2,"aufeinanderfolgend":0}]}},"pop":{"Mo_A_R1":9,"Mo_B_R1":10,"Mo_C_R1":7,"Mo_D_R1":7,"Di_A_R1":8,"Di_B_R1":9,"Di_C_R1":6,"Di_D_R1":6,"Mi_A_R1":8,"Mi_B_R1":9,"Mi_C_R1":6,"Mi_D_R1":6,"Do_A_R1":7,"Do_B_R1":8,"Do_C_R1":5,"Do_D_R1":5,"Fr_A_R1":5,"Fr_B_R1":6,"Fr_C_R1":3,"Fr_D_R1":3}};
+const DAYS = ["Mo", "Di", "Mi", "Do", "Fr"];
+const DAY_NAMES = { Mo: "Montag", Di: "Dienstag", Mi: "Mittwoch", Do: "Donnerstag", Fr: "Freitag" };
+const SLOTS = ["A", "B", "C", "D"];
+const TIMES = { A: "08:00–10:00", B: "10:30–12:30", C: "13:00–15:00", D: "15:30–17:30" };
+
+function chip(s) {
+  return `<span class="chip" style="background:var(--c-${s});color:var(--t-${s})">${s}</span>`;
+}
+
+// Übergänge "letzter Slot (D) an Tag d → erster Slot (A) an Tag d+1" desselben Studiengangs
+function findDA(sol) {
+  const hits = [];
+  for (let i = 0; i < DAYS.length - 1; i++) {
+    const d = DAYS[i], n = DAYS[i + 1];
+    const late = new Set([sol[`${d}_D_R1`], sol[`${d}_D_R2`]]);
+    const early = new Set([sol[`${n}_A_R1`], sol[`${n}_A_R2`]]);
+    late.forEach(s => { if (early.has(s)) hits.push({ s, from: d, to: n }); });
+  }
+  return hits;
+}
+
+function flaggedSlots(sol) {
+  const flagged = new Set();
+  findDA(sol).forEach(h => {
+    ["R1", "R2"].forEach(r => {
+      if (sol[`${h.from}_D_${r}`] === h.s) flagged.add(`${h.from}_D_${r}`);
+      if (sol[`${h.to}_A_${r}`] === h.s) flagged.add(`${h.to}_A_${r}`);
+    });
+  });
+  return flagged;
+}
+
+function cellHTML(sol, d, t, flagged) {
+  const a = sol[`${d}_${t}_R1`], b = sol[`${d}_${t}_R2`];
+  const f1 = flagged.has(`${d}_${t}_R1`), f2 = flagged.has(`${d}_${t}_R2`);
+  if (a === b) {
+    return `<div class="tile wide${f1 || f2 ? " flag" : ""}" style="background:var(--c-${a});color:var(--t-${a})" title="${a}: ${DAY_NAMES[d]} ${t}, beide Räume">${a}<small>R1 + R2 parallel</small></div>`;
+  }
+  return `<div class="tile${f1 ? " flag" : ""}" style="background:var(--c-${a});color:var(--t-${a})" title="${a}: ${DAY_NAMES[d]} ${t}, Raum 1">${a}<small>R1</small></div>` +
+         `<div class="tile${f2 ? " flag" : ""}" style="background:var(--c-${b});color:var(--t-${b})" title="${b}: ${DAY_NAMES[d]} ${t}, Raum 2">${b}<small>R2</small></div>`;
+}
+
+// Schmale Bildschirme: ein Block pro Tag statt einer breiten Tabelle
+function renderPlanByDay(el, week, opts = {}) {
+  const sol = DATA.weeks[week].sol;
+  const flagged = opts.flagDA ? flaggedSlots(sol) : new Set();
+  el.innerHTML = `<div class="dayplan" aria-label="Belegungsplan ${week}">` + DAYS.map(d =>
+    `<div class="daycard"><h4>${DAY_NAMES[d]}</h4>` + SLOTS.map(t =>
+      `<div class="drow"><span class="sl"><b>${t}</b>${TIMES[t].split("–")[0]}</span><div class="cell">${cellHTML(sol, d, t, flagged)}</div></div>`
+    ).join("") + `</div>`
+  ).join("") + `</div>`;
+}
+
+function renderPlan(el, week, opts = {}) {
+  const sol = DATA.weeks[week].sol;
+  const flagged = new Set();
+  if (opts.flagDA) {
+    findDA(sol).forEach(h => {
+      ["R1", "R2"].forEach(r => {
+        if (sol[`${h.from}_D_${r}`] === h.s) flagged.add(`${h.from}_D_${r}`);
+        if (sol[`${h.to}_A_${r}`] === h.s) flagged.add(`${h.to}_A_${r}`);
+      });
+    });
+  }
+  let html = `<div class="plan" role="table" aria-label="Belegungsplan ${week}"><div></div>`;
+  DAYS.forEach(d => { html += `<div class="hd" role="columnheader">${opts.longDays ? DAY_NAMES[d] : d}</div>`; });
+  SLOTS.forEach(t => {
+    html += `<div class="slotlbl" role="rowheader"><b>${t}</b>${TIMES[t].replace("–", "–<br>")}</div>`;
+    DAYS.forEach(d => {
+      const a = sol[`${d}_${t}_R1`], b = sol[`${d}_${t}_R2`];
+      const f1 = flagged.has(`${d}_${t}_R1`), f2 = flagged.has(`${d}_${t}_R2`);
+      html += `<div class="cell" role="cell">`;
+      if (a === b) {
+        html += `<div class="tile wide${f1 || f2 ? " flag" : ""}" style="background:var(--c-${a});color:var(--t-${a})" title="${a}: ${DAY_NAMES[d]} ${t}, beide Räume">${a}<small>R1 + R2 parallel</small></div>`;
+      } else {
+        html += `<div class="tile${f1 ? " flag" : ""}" style="background:var(--c-${a});color:var(--t-${a})" title="${a}: ${DAY_NAMES[d]} ${t}, Raum 1">${a}<small>R1</small></div>`;
+        html += `<div class="tile${f2 ? " flag" : ""}" style="background:var(--c-${b});color:var(--t-${b})" title="${b}: ${DAY_NAMES[d]} ${t}, Raum 2">${b}<small>R2</small></div>`;
+      }
+      html += `</div>`;
+    });
+  });
+  el.innerHTML = html + `</div>`;
+}
+
+function renderLegend(el, week) {
+  const g = DATA.weeks[week].groups;
+  el.innerHTML = Object.keys(g).map(s =>
+    `<span><i class="sw" style="background:var(--c-${s})"></i>${s} · ${g[s]} ${g[s] === 1 ? "Kursgruppe" : "Kursgruppen"}</span>`
+  ).join("");
+}
+
+function setupTabs(tabsEl, onChange) {
+  const weeks = Object.keys(DATA.weeks);
+  tabsEl.innerHTML = weeks.map((w, i) =>
+    `<button type="button" role="tab" aria-selected="${i === 0}" data-week="${w}">${w}</button>`).join("");
+  tabsEl.addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    tabsEl.querySelectorAll("button").forEach(x => x.setAttribute("aria-selected", x === b));
+    onChange(b.dataset.week);
+  });
+  onChange(weeks[0]);
+}
+
+const W1 = DATA.weeks["Woche 1"], SOL = W1.sol;
+const PROGS = Object.keys(W1.groups);
+const ROWS = []; SLOTS.forEach(t => ["R1", "R2"].forEach(r => ROWS.push([t, r])));
+// Reihenfolge der Kästchen: Tag für Tag, so wie ein Solver sie durchgehen würde
+const VARS = []; DAYS.forEach(d => SLOTS.forEach(t => ["R1", "R2"].forEach(r => VARS.push(`${d}_${t}_${r}`))));
+
+// Karten: jeder Studiengang nummeriert seine Slots in Plan-Reihenfolge
+const CARDS = [];
+PROGS.forEach(s => { let k = 0; VARS.forEach(v => { if (SOL[v] === s) CARDS.push({ s, k: ++k, v }); }); });
+// Ablegereihenfolge: abwechselnd über die Studiengänge, damit die Animation gemischt wirkt
+const ORDER = [...CARDS].sort((a, b) => VARS.indexOf(a.v) - VARS.indexOf(b.v));
+
+function miniPlan(el, fill) {
+  let h = `<div></div>` + DAYS.map(d => `<div class="h">${d}</div>`).join("");
+  ROWS.forEach(([t, r]) => {
+    h += `<div class="rl">${t}·${r.slice(1)}</div>`;
+    DAYS.forEach(d => {
+      const v = `${d}_${t}_${r}`, f = fill(v);
+      h += f ? `<div class="c filled${f.now ? " now" : ""}" style="background:var(--c-${f.s});color:var(--t-${f.s})">${f.label}</div>` : `<div class="c"></div>`;
+    });
+  });
+  el.innerHTML = h;
+}
+function deck(el, used, now) {
+  el.innerHTML = CARDS.map(c => {
+    const id = `${c.s}_${c.k}`;
+    return `<span class="cardx${used.has(id) ? " used" : ""}${now === id ? " now" : ""}" style="--sg:var(--c-${c.s})">${id}</span>`;
+  }).join("");
+}
+
+// Kopfbereich
+miniPlan(document.getElementById("heroL"), v => ({ s: SOL[v], label: SOL[v] }));
+deck(document.getElementById("heroDeck"), new Set(), null);
+
+// Schritt-Demo
+const stepEl = document.getElementById("step"), out = document.getElementById("stepOut");
+const LOG_MAX = 64;
+function sci(exp) {
+  if (exp < 6) return Math.round(Math.pow(10, exp)).toLocaleString("de-DE");
+  const e = Math.floor(exp), m = Math.pow(10, exp - e);
+  const sup = String(e).split("").map(c => "⁰¹²³⁴⁵⁶⁷⁸⁹"[+c]).join("");
+  return `${m.toFixed(1).replace(".", ",")}·10${sup}`;
+}
+function render(k) {
+  out.textContent = `${k} / 40 Entscheidungen`;
+  const doneVars = new Set(VARS.slice(0, k)), nowVar = k > 0 ? VARS[k - 1] : null;
+  miniPlan(document.getElementById("stepL"), v => doneVars.has(v) ? { s: SOL[v], label: SOL[v], now: v === nowVar } : null);
+  const placed = ORDER.slice(0, k), byVar = {};
+  placed.forEach(c => byVar[c.v] = c);
+  const nowCard = k > 0 ? `${ORDER[k - 1].s}_${ORDER[k - 1].k}` : null;
+  miniPlan(document.getElementById("stepR"), v => byVar[v] ? { s: byVar[v].s, label: `${byVar[v].s}${byVar[v].k}`, now: `${byVar[v].s}_${byVar[v].k}` === nowCard } : null);
+  deck(document.getElementById("stepDeck"), new Set(placed.map(c => `${c.s}_${c.k}`)), nowCard);
+  const eL = k * Math.log10(5), eR = k * Math.log10(40);
+  document.getElementById("eL").textContent = k; document.getElementById("eR").textContent = k;
+  document.getElementById("barL").style.width = (eL / LOG_MAX * 100) + "%";
+  document.getElementById("barR").style.width = (eR / LOG_MAX * 100) + "%";
+  document.getElementById("valL").textContent = sci(eL);
+  document.getElementById("valR").textContent = sci(eR);
+}
+stepEl.addEventListener("input", () => { stop(); render(+stepEl.value); });
+let timer = null;
+const playBtn = document.getElementById("play");
+function stop() { clearInterval(timer); timer = null; playBtn.textContent = "▶ Abspielen"; }
+playBtn.addEventListener("click", () => {
+  if (timer) return stop();
+  if (+stepEl.value >= 40) stepEl.value = 0;
+  playBtn.textContent = "❚❚ Pause";
+  timer = setInterval(() => {
+    const k = +stepEl.value + 1; stepEl.value = k; render(k);
+    if (k >= 40) stop();
+  }, 220);
+});
+document.getElementById("reset").addEventListener("click", () => { stop(); stepEl.value = 0; render(0); });
+render(+stepEl.value);
+
+// Schalter-Matrizen
+function dots(el, rows, cols, isOn) {
+  el.style.gridTemplateColumns = `repeat(${cols.length}, 6px)`;
+  el.innerHTML = rows.map(r => cols.map(c => `<i${isOn(r, c) ? ' class="on"' : ""}></i>`).join("")).join("");
+}
+dots(document.getElementById("matL"), VARS, PROGS, (v, s) => SOL[v] === s);
+dots(document.getElementById("matR"), CARDS, VARS, (c, v) => c.v === v);
+
+// Constraint-Vergleich
+const CMP = [
+  ["Ein Raum, ein Studiengang", "auto", "Automatisch. Jedes Kästchen hat genau eine Farbe.", "hard", "<code>AllDifferent</code> über alle 40 Karten, sonst landen zwei Karten im selben Kästchen."],
+  ["Nur Studiengänge der Woche", "auto", "Über die Domäne: Es stehen nur 5 Farben zur Wahl.", "auto", "Automatisch. Es gibt nur Karten für beteiligte Studiengänge."],
+  ["Bedarf (lo–hi Slots)", "easy", "Zähl-Constraint: Wie viele Kästchen haben die Farbe MB? Flexibel bei lo ≠ hi.", "hard", "Steckt in der Kartenanzahl, aber bei MB 17–18 in Woche 2 ist unklar, ob es 17 oder 18 Karten gibt."],
+  ["Tagesverteilung", "easy", "Kästchen eines Tages zählen, Tag steht im Namen.", "easy", "Karten zählen, deren Slot an Tag d liegt. Der Tag muss aus dem Wert gelesen werden."],
+  ["Popularität", "easy", "Summe von p über die Kästchen mit Farbe s.", "easy", "Summe von p(Slot der Karte), umgesetzt über einen <code>Element</code>-Constraint."],
+  ["Parallel (beide Räume)", "easy", "<code>Mo_A_R1</code> und <code>Mo_A_R2</code> haben dieselbe Farbe, zwei feste Variablen.", "hard", "Zwei Karten von s mit gleichem Tag und Slot, aber anderem Raum. Dazu müssen alle Kartenpaare verglichen werden."],
+  ["D → A (Abend, dann Morgen)", "easy", "Vier feste Kästchen pro Tageswechsel vergleichen.", "hard", "Für jedes Kartenpaar prüfen, ob eine Karte auf D an Tag d und die andere auf A an Tag d+1 liegt."],
+  ["Symmetrien", "easy", "Nur R1 ↔ R2.", "hard", "Alle Vertauschungen der Karten eines Studiengangs, eine Ordnung ist nötig."],
+];
+const VLBL = { auto: "automatisch", easy: "direkt formulierbar", hard: "aufwendig" };
+document.getElementById("cmp").innerHTML = CMP.map(([w, vl, tl, vr, tr]) =>
+  `<div class="cmp-row"><div class="what">${w}</div>
+   <div class="l"><span class="side-lbl l">Slot-Modell</span><span class="verdict v-${vl}">${VLBL[vl]}</span><p>${tl}</p></div>
+   <div class="r"><span class="side-lbl r">Bedarfseinheiten-Modell</span><span class="verdict v-${vr}">${VLBL[vr]}</span><p>${tr}</p></div></div>`).join("");
+</script>
+</body>
+</html>

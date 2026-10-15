@@ -1,0 +1,65 @@
+{
+  "time_slot_preferences": {
+    "A": {
+      "time": "08:00-10:00",
+      "preference": 4
+    },
+    "B": {
+      "time": "10:30-12:30",
+      "preference": 5
+    },
+    "C": {
+      "time": "13:00-15:00",
+      "preference": 2
+    },
+    "D": {
+      "time": "15:30-17:30",
+      "preference": 2
+    }
+  },
+  "weekday_preferences": {
+    "Montag": 5,
+    "Dienstag": 4,
+    "Mittwoch": 4,
+    "Donnerstag": 3,
+    "Freitag": 1
+  },
+  "appointment_structure_preferences": [
+    {
+      "condition": "course_groups >= 3",
+      "parallel": {
+        "preference": 6,
+        "allowed": true
+      },
+      "sequential": {
+        "preference": 3,
+        "allowed": true
+      },
+      "description": "Studiengänge mit mindestens 3 Gruppen präferieren parallele Termine."
+    },
+    {
+      "condition": "course_groups == 2",
+      "parallel": {
+        "preference": 0,
+        "allowed": true
+      },
+      "sequential": {
+        "preference": 0,
+        "allowed": true
+      },
+      "description": "Bei Studiengängen mit genau 2 Gruppen sind parallele und direkt aufeinanderfolgende Termine erlaubt, jedoch nicht besonders präferiert."
+    },
+    {
+      "condition": "course_groups == 1",
+      "parallel": {
+        "preference": 0,
+        "allowed": false
+      },
+      "sequential": {
+        "preference": 0,
+        "allowed": false
+      },
+      "description": "Bei Studiengängen mit nur einer Gruppe sind parallele und direkt aufeinanderfolgende Termine ausgeschlossen."
+    }
+  ]
+}

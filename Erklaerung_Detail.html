@@ -1,0 +1,502 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prüfungsraum-CSP im Detail</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,600;1,400&family=STIX+Two+Text:ital@0;1&display=swap">
+<style>
+/* Layout: Stundenplan-Raster – linksbündige Spalte, Prüfungsraster als zentrales Bild */
+:root {
+  --bg: #f5f7f9;
+  --surface: #ffffff;
+  --fg: #16202b;
+  --muted: #586776;
+  --line: #d6dde4;
+  --accent: #c2562b;
+  --accent-soft: #f6e3d9;
+  --ok: #247a5c;
+  --warn: #b2401f;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --font-body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --font-math: "STIX Two Text", "Cambria Math", "Times New Roman", serif;
+  --c-MB: #2f6fb3; --t-MB: #ffffff;
+  --c-DS: #b8502a; --t-DS: #ffffff;
+  --c-MT: #247a5c; --t-MT: #ffffff;
+  --c-ES: #7d55b8; --t-ES: #ffffff;
+  --c-INF: #e0ad2c; --t-INF: #1d1808;
+  --c-ET: #b83a72; --t-ET: #ffffff;
+  --c-WIW: #3f7280; --t-WIW: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161c; --surface: #19212a; --fg: #e4e9ee; --muted: #9aa8b5; --line: #2c3743;
+    --accent: #e8814f; --accent-soft: #3a2519; --ok: #5cc49c; --warn: #f08a63;
+    --c-MB: #3d7cc2; --c-DS: #c25e36; --c-MT: #2e8a69; --c-ES: #8a63c7; --c-INF: #e0ad2c; --c-ET: #c44a80; --c-WIW: #4d8291;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161c; --surface: #19212a; --fg: #e4e9ee; --muted: #9aa8b5; --line: #2c3743;
+  --accent: #e8814f; --accent-soft: #3a2519; --ok: #5cc49c; --warn: #f08a63;
+  --c-MB: #3d7cc2; --c-DS: #c25e36; --c-MT: #2e8a69; --c-ES: #8a63c7; --c-INF: #e0ad2c; --c-ET: #c44a80; --c-WIW: #4d8291;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.6; }
+.wrap { max-width: 980px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 80px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 56px; }
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.15; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 3.1rem); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 1.65rem; font-weight: 650; }
+h3 { font-size: 1.15rem; font-weight: 650; }
+p { margin: 0; max-width: 68ch; }
+section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; min-width: 0; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lede { font-size: 1.15rem; color: var(--muted); max-width: 62ch; }
+.muted { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 0.88em; }
+code { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+.math { font-family: var(--font-math); font-size: 1.12em; }
+.math i { font-style: italic; }
+.formula { font-family: var(--font-math); font-size: 1.25rem; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; overflow-x: auto; white-space: nowrap; }
+.frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 3px; }
+.frac > span:first-child { border-bottom: 1px solid currentColor; padding: 0 4px; }
+.frac > span:last-child { padding: 0 4px; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: 0.93rem; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.chip { display: inline-block; min-width: 2.6em; text-align: center; font-family: var(--font-mono); font-size: 0.8rem; font-weight: 600; padding: 1px 7px; border-radius: 4px; }
+.pill { display: inline-block; font-family: var(--font-mono); font-size: 0.72rem; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.pill.ok { color: var(--ok); }
+.pill.open { color: var(--warn); }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.cols > * { min-width: 0; }
+.note { border-left: 3px solid var(--accent); padding: 4px 0 4px 16px; max-width: 68ch; }
+ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 68ch; }
+
+/* Wochenraster */
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.tabs button { font: inherit; font-family: var(--font-mono); font-size: 0.85rem; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.tabs button:focus-visible, .toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.grid-scroll { overflow-x: auto; }
+.plan { display: grid; grid-template-columns: 74px repeat(5, minmax(96px, 1fr)); gap: 6px; min-width: 600px; }
+.plan .hd { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); text-align: center; padding-bottom: 2px; }
+.plan .slotlbl { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); display: flex; flex-direction: column; justify-content: center; line-height: 1.25; }
+.plan .slotlbl b { font-size: 1rem; color: var(--fg); }
+.cell { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; min-height: 52px; }
+.tile { border-radius: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: var(--font-mono); font-weight: 600; font-size: 0.86rem; line-height: 1.1; position: relative; }
+.tile small { font-weight: 400; font-size: 0.64rem; opacity: 0.85; }
+.tile.wide { grid-column: span 2; }
+.tile.flag { outline: 2.5px dashed var(--warn); outline-offset: 2px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 0.88rem; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+.toggle { font: inherit; font-size: 0.85rem; display: inline-flex; gap: 8px; align-items: center; cursor: pointer; }
+
+.dayplan { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 12px; }
+.daycard { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px; display: grid; gap: 5px; min-width: 0; }
+.daycard h4 { margin: 0 0 2px; font-family: var(--font-display); font-size: 1rem; font-weight: 650; }
+.drow { display: grid; grid-template-columns: 40px 1fr; gap: 6px; align-items: stretch; }
+.drow .sl { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); display: flex; flex-direction: column; justify-content: center; line-height: 1.2; }
+.drow .sl b { font-size: 0.92rem; color: var(--fg); }
+.drow .cell { min-height: 42px; }
+.drow .tile { font-size: 0.8rem; }
+
+@media (max-width: 520px) {
+  .wrap { padding-inline: 16px; gap: 44px; }
+  .formula { font-size: 1.05rem; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .tile { transition: transform .15s ease; }
+}
+
+.heat { display: grid; grid-template-columns: 30px repeat(5, minmax(0, 1fr)); gap: 4px; max-width: 520px; font-family: var(--font-mono); font-size: 0.85rem; }
+.heat .h { color: var(--muted); text-align: center; font-size: 0.75rem; align-self: end; }
+.heat .r { color: var(--muted); display: flex; align-items: center; }
+.heat .v { border-radius: 4px; text-align: center; padding: 10px 0; font-weight: 600; color: var(--fg); }
+.band { position: relative; height: 22px; min-width: 150px; }
+.band .rail { position: absolute; left: 0; right: 0; top: 10px; height: 2px; background: var(--line); }
+.band .ok { position: absolute; top: 4px; height: 14px; background: color-mix(in srgb, var(--ok) 22%, transparent); border: 1px solid var(--ok); border-radius: 3px; }
+.band .mean { position: absolute; top: 1px; width: 2px; height: 20px; background: var(--muted); }
+.band .dot { position: absolute; top: 5px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; border: 2px solid var(--surface); }
+.struct-fig { display: flex; gap: 28px; flex-wrap: wrap; }
+.struct-fig figure { margin: 0; display: grid; gap: 8px; }
+.struct-fig figcaption { font-size: 0.88rem; color: var(--muted); max-width: 30ch; }
+.mini { display: grid; grid-template-columns: 22px 40px 40px; gap: 3px; font-family: var(--font-mono); font-size: 0.72rem; }
+.mini span { height: 24px; border-radius: 3px; display: flex; align-items: center; justify-content: center; }
+.mini .e { border: 1px dashed var(--line); }
+.mini .l { color: var(--muted); }
+.yes { color: var(--ok); font-weight: 600; }
+.no { color: var(--warn); font-weight: 600; }
+.status td:first-child { font-family: var(--font-mono); white-space: nowrap; }
+.formula { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; white-space: normal; }
+.formula .eq { white-space: nowrap; }
+.formula .op { color: var(--muted); }
+.rep { color: var(--muted); }
+@media (min-width: 681px) { .rep.hide-wide { visibility: hidden; } }
+@media (max-width: 680px) {
+  .wrap { gap: 44px; }
+  h2 { font-size: 1.4rem; }
+  .formula { font-size: 1.08rem; padding: 14px 16px; flex-direction: column; align-items: flex-start; }
+  .formula .op { transform: rotate(90deg); }
+  .tablewrap:has(table.stack) { border: 0; background: transparent; overflow: visible; }
+  table.stack, table.stack tbody { display: block; }
+  table.stack thead { display: none; }
+  table.stack tr { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; padding: 14px; margin-bottom: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+  table.stack td { border: 0; padding: 0; display: block; min-width: 0; overflow-wrap: anywhere; }
+  table.stack td::before { display: block; margin-bottom: 2px; content: attr(data-label); font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  table.stack td.full { grid-column: 1 / -1; }
+  table.stack td.head { grid-column: 1 / -1; font-family: var(--font-display); font-weight: 650; font-size: 1rem; }
+  table.stack td.head::before { display: none; }
+  .rep.hide-wide { visibility: visible; }
+  .band { min-width: 0; }
+  .struct-fig { gap: 18px; }
+}
+</style>
+
+<main class="wrap">
+  <header style="display:grid;gap:14px">
+    <div class="eyebrow">Gruppe C · Christopher Klein &amp; Colin Vavra · Stand 11.10.2026</div>
+    <h1>Prüfungsraum-CSP im Detail</h1>
+    <p class="lede">Wie das Notebook <code>CSP_GruppeC.ipynb</code> die 40 Raum-Zeit-Slots einer Prüfungswoche auf die Studiengänge verteilt: Modell, Constraints, Herleitung der Parameter und die aktuell gefundenen Belegungspläne.</p>
+  </header>
+
+  <section>
+    <div class="eyebrow">Ausgangslage</div>
+    <h2>40 Slots pro Woche, drei unabhängige Wochen</h2>
+    <p>Zwei Räume, vier Zeitslots, fünf Tage: <span class="math">2 · 4 · 5 = 40</span> Raum-Zeit-Slots. Jede Woche wird als eigenes CSP gelöst, weil sich die beteiligten Studiengänge und damit der relative Bedarf von Woche zu Woche ändern.</p>
+    <div class="cols">
+      <div class="tablewrap"><table class="stack">
+        <thead><tr><th>Woche</th><th>Studiengänge (Kursgruppen g)</th><th>Σ g</th></tr></thead>
+        <tbody id="weeksTable"></tbody>
+      </table></div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Slot</th><th>Zeit</th><th>Präf.</th></tr></thead>
+        <tbody>
+          <tr><td>A</td><td>08:00–10:00</td><td>4</td></tr>
+          <tr><td>B</td><td>10:30–12:30</td><td>5</td></tr>
+          <tr><td class="head">C</td><td>13:00–15:00</td><td>2</td></tr>
+          <tr><td>D</td><td>15:30–17:30</td><td>2</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <p class="muted">Wochentage: Mo 5 · Di 4 · Mi 4 · Do 3 · Fr 1. Strukturregeln: g ≥ 3 parallel 6 / aufeinanderfolgend 3, g = 2 beides 0 (erlaubt), g = 1 beides verboten.</p>
+  </section>
+
+  <section>
+    <div class="eyebrow">Aufgabe 4.1 · Modell</div>
+    <h2>Variablen, Domänen und ihre Kodierung in CP-SAT</h2>
+    <div class="cols">
+      <div style="display:grid;gap:10px">
+        <h3>Fachliches Modell</h3>
+        <p><b>X:</b> eine Variable je Kombination aus Tag, Zeitslot und Raum, z. B. <code>Mo_A_R1</code>. Der Wert ist der Studiengang, der dort prüft.</p>
+        <p><b>D:</b> nur die Studiengänge der jeweiligen Woche, z. B. Woche 1 = {ES, INF, MB, MT, DS}. Damit ist „nur beteiligte Studiengänge erhalten Slots“ bereits durch die Domäne erfüllt.</p>
+      </div>
+      <div style="display:grid;gap:10px">
+        <h3>Technische Umsetzung</h3>
+        <p>CP-SAT arbeitet mit ganzzahligen Variablen. Jede fachliche Variable wird deshalb in Boolesche Variablen <span class="math"><i>x</i><sub><i>v,s</i></sub> ∈ {0, 1}</span> zerlegt: 1 heißt „Slot <i>v</i> gehört Studiengang <i>s</i>“.</p>
+        <p><code>AddExactlyOne</code> pro Slot stellt sicher, dass jede fachliche Variable genau einen Wert hat. Woche 1 hat damit 40 · 5 = 200 Boolesche Variablen.</p>
+      </div>
+    </div>
+    <h3 style="margin-top:8px">Umsetzungsstand der Constraints</h3>
+    <div class="tablewrap"><table class="status stack">
+      <thead><tr><th>#</th><th>Anforderung</th><th>Umsetzung im Notebook</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td class="head">C1</td><td class="full">Ein Raum zu einem Zeitpunkt nur ein Studiengang</td><td class="full"><code>AddExactlyOne</code> je Slot</td><td><span class="pill ok">umgesetzt</span></td></tr>
+        <tr><td class="head">C2</td><td class="full">Nur Studiengänge der Woche</td><td class="full">Domäne: <code>programs</code> der Woche</td><td><span class="pill ok">umgesetzt</span></td></tr>
+        <tr><td class="head">C3</td><td class="full">Slots je Woche nach Bedarf</td><td class="full"><code>AddLinearConstraint(Σ x, lo, hi)</code> mit 40 Slots</td><td><span class="pill ok">umgesetzt</span></td></tr>
+        <tr><td class="head">C4</td><td class="full">Keine Konzentration auf einzelne Tage</td><td class="full">dieselbe Regel mit 8 Slots pro Tag</td><td><span class="pill ok">umgesetzt</span></td></tr>
+        <tr><td class="head">C5</td><td class="full">Faire Verteilung der Popularität</td><td class="full"><code>add_popularity_constraints</code>, τ = 0,5</td><td><span class="pill ok">umgesetzt</span></td></tr>
+        <tr><td class="head">C6</td><td class="full">g = 1: nicht parallel, nicht aufeinanderfolgend</td><td class="full"><code>add_structure_constraints</code>: Summe = 0</td><td><span class="pill ok">umgesetzt</span></td></tr>
+        <tr><td class="head">C7</td><td class="full">g ≥ 3: parallel bevorzugt</td><td class="full">(a) #par ≥ #seq, (b) #par ≥ ⌊lo · 0,5 / 2⌋</td><td><span class="pill ok">umgesetzt</span></td></tr>
+        <tr><td class="head">C8</td><td class="full">Jeder relevante Prüfungstag</td><td class="full">indirekt über C4, wenn die Untergrenze pro Tag ≥ 1 ist</td><td><span class="pill ok">indirekt</span></td></tr>
+        <tr><td class="head">C9</td><td class="full">Slot D an Tag d, dann nicht Slot A an Tag d+1</td><td class="full">fehlt noch</td><td><span class="pill open">offen</span></td></tr>
+        <tr><td class="head">–</td><td class="full">Automatische Validierung (4.6, Punkt 5)</td><td class="full">bisher nur Kennzahlen-Tabelle <code>pop_and_struc</code></td><td><span class="pill open">offen</span></td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Aufgabe 4.2 · Bedarf</div>
+    <h2>Vom Kursgruppenanteil zu ganzzahligen Grenzen</h2>
+    <div class="formula">
+      <span class="eq"><i>q<sub>s</sub></i> = <span class="frac"><span><i>g<sub>s</sub></i></span><span>Σ<sub><i>j</i>∈<i>W</i></sub> <i>g<sub>j</sub></i></span></span></span>
+      <span class="op">⇒</span>
+      <span class="eq">⌊<i>q<sub>s</sub></i> · 40⌋ ≤ <i>n<sub>s</sub></i> ≤ ⌈<i>q<sub>s</sub></i> · 40⌉</span>
+      <span class="op" style="transform:none">und</span>
+      <span class="eq">⌊<i>q<sub>s</sub></i> · 8⌋ ≤ <i>n<sub>s,d</sub></i> ≤ ⌈<i>q<sub>s</sub></i> · 8⌉</span>
+    </div>
+    <p>Dieselbe Funktion <code>demand_bounds(week_df, n_slots)</code> liefert beide Grenzen: mit <code>n_slots = 40</code> für die Woche und mit <code>n_slots = 8</code> für jeden Tag. Der Tagesbedarf hängt damit, wie gefordert, von der Größe des Studiengangs und von den anderen Studiengängen derselben Woche ab.</p>
+    <div class="tablewrap"><table class="stack">
+      <thead><tr><th>Woche</th><th>Studiengang</th><th>g</th><th>q · 40</th><th>Woche (lo–hi)</th><th>pro Tag (lo–hi)</th><th>an jedem Tag?</th></tr></thead>
+      <tbody id="boundsTable"></tbody>
+    </table></div>
+    <p class="note">In Woche 1 ist jedes <span class="math"><i>q<sub>s</sub></i> · 40</span> ganzzahlig, die Slotzahlen sind also exakt festgelegt (6 / 2 / 16 / 8 / 8). Diese Woche hat den kleinsten Spielraum und reagiert als erste auf strengere Parameter.</p>
+  </section>
+
+  <section>
+    <div class="eyebrow">Aufgabe 4.3 · Popularität</div>
+    <h2>Fairness über die mittlere Popularität</h2>
+    <p>Popularität eines Slots: <span class="math"><i>p</i>(<i>d</i>, <i>t</i>) = pref<sub>Tag</sub>(<i>d</i>) + pref<sub>Slot</sub>(<i>t</i>)</span>. Werte von 3 (Freitag nachmittags) bis 10 (Montag B).</p>
+    <div class="grid-scroll"><div class="heat" id="heat"></div></div>
+    <p>Weil immer alle 40 Slots vergeben werden, ist die Gesamtpopularität fest: 266, im Mittel <span class="math"><i>p̄</i> = 6,65</span>. Jeder Studiengang muss im Mittel in einem Band um diesen Wert liegen:</p>
+    <div class="formula">
+      <span class="eq"><i>p̄</i> − <i>τ</i> ≤ <span class="frac"><span>1</span><span><i>n<sub>s</sub></i></span></span> Σ<sub><i>v</i>: <i>x<sub>v</sub></i> = <i>s</i></sub> <i>p</i>(<i>v</i>) ≤ <i>p̄</i> + <i>τ</i></span>
+      <span class="op">⇔</span>
+      <span class="eq">| Σ<sub><i>v</i></sub> (40 · <i>p</i>(<i>v</i>) − 266) · <i>x<sub>v,s</sub></i> | ≤ 40 · <i>τ</i> · <i>n<sub>s</sub></i></span>
+    </div>
+    <p>Die Umformung multipliziert mit <span class="math"><i>n<sub>s</sub></i></span> und mit 40. So verschwinden der Bruch und die Dezimalzahl 6,65, und CP-SAT erhält eine lineare, ganzzahlige Bedingung mit derselben Bedeutung. Große Studiengänge erhalten absolut mehr gute Termine, pro Slot aber weder mehr noch weniger als die anderen.</p>
+    <div class="cols">
+      <div class="tablewrap"><table class="stack">
+        <thead><tr><th>τ</th><th>W1</th><th>W2</th><th>W3</th></tr></thead>
+        <tbody>
+          <tr><td class="head">τ = 0</td><td class="no">unlösbar</td><td class="no">unlösbar</td><td class="no">unlösbar</td></tr>
+          <tr><td class="head">τ = 0,1</td><td class="no">unlösbar</td><td class="yes">lösbar</td><td class="yes">lösbar</td></tr>
+          <tr><td class="head">τ = 0,25</td><td class="yes">lösbar</td><td class="yes">lösbar</td><td class="yes">lösbar</td></tr>
+          <tr><td class="head">τ = 0,5 (gewählt)</td><td class="yes">lösbar</td><td class="yes">lösbar</td><td class="yes">lösbar</td></tr>
+        </tbody>
+      </table></div>
+      <div style="display:grid;gap:10px;align-content:start">
+        <h3>Warum scheitert τ = 0,1?</h3>
+        <p>INF hat in Woche 1 nur 2 Slots. Der Mittelwert zweier ganzzahliger Popularitäten springt in Schritten von 0,5 (… 6,0 · 6,5 · 7,0 …). Das Band 6,55–6,75 enthält keinen dieser Werte. Bei τ = 0,5 (Band 6,15–7,15) sind 6,5 und 7,0 erlaubt.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Aufgabe 4.4 · Struktur</div>
+    <h2>Parallele und aufeinanderfolgende Belegung</h2>
+    <div class="struct-fig">
+      <figure>
+        <div class="mini">
+          <span></span><span class="l">R1</span><span class="l">R2</span>
+          <span class="l">A</span><span style="background:var(--c-MB);color:var(--t-MB)">MB</span><span style="background:var(--c-MB);color:var(--t-MB)">MB</span>
+          <span class="l">B</span><span class="e"></span><span class="e"></span>
+        </div>
+        <figcaption><b>Parallel:</b> derselbe Zeitpunkt, beide Räume. <code>par = min(x_R1, x_R2)</code></figcaption>
+      </figure>
+      <figure>
+        <div class="mini">
+          <span></span><span class="l">R1</span><span class="l">R2</span>
+          <span class="l">A</span><span style="background:var(--c-MB);color:var(--t-MB)">MB</span><span class="e"></span>
+          <span class="l">B</span><span class="e"></span><span style="background:var(--c-MB);color:var(--t-MB)">MB</span>
+        </div>
+        <figcaption><b>Aufeinanderfolgend:</b> zwei benachbarte Zeitslots am selben Tag, Raum egal. <code>seq = min(used_t, used_t+1)</code></figcaption>
+      </figure>
+    </div>
+    <div class="tablewrap"><table class="stack">
+      <thead><tr><th>Bedingung</th><th>Datensatz</th><th>Constraint</th><th>betrifft</th></tr></thead>
+      <tbody>
+        <tr><td class="head">g = 1</td><td class="full">parallel und aufeinanderfolgend <code>allowed: false</code></td><td class="full">Σ par = 0 und Σ seq = 0</td><td>INF (W1)</td></tr>
+        <tr><td class="head">g = 2</td><td class="full">erlaubt, Präferenz 0 / 0</td><td class="full">keine Einschränkung</td><td>ET (W2, W3)</td></tr>
+        <tr><td class="head">g ≥ 3</td><td class="full">erlaubt, parallel 6 &gt; aufeinanderfolgend 3</td><td class="full">(a) Σ par ≥ Σ seq<br>(b) Σ par ≥ ⌊lo<sub>s</sub> · PAR_SHARE / 2⌋</td><td>alle anderen</td></tr>
+      </tbody>
+    </table></div>
+    <p>(b) verlangt, dass mindestens die Hälfte der Mindest-Slots in Parallelpaaren liegt (<code>PAR_SHARE = 0.5</code>), z. B. MB in Woche 1: ⌊16 · 0,5 / 2⌋ = 4 Paare. Ohne (b) wäre (a) schon mit 0 ≥ 0 erfüllt. Das naheliegende Verhältnis 6 / (6 + 3) = 2/3 macht Woche 1 unlösbar: ES darf pro Tag höchstens 2 Slots haben, bei 6 Slots kann also nur an einem Tag ein Paar entstehen.</p>
+    <div class="tablewrap"><table class="stack">
+      <thead><tr><th>τ \ PAR_SHARE</th><th>PAR_SHARE 0,5</th><th>PAR_SHARE 0,75</th><th>PAR_SHARE 1,0</th></tr></thead>
+      <tbody>
+        <tr><td class="head">τ = 0,1</td><td>W1 ✗ · W2 ✓ · W3 ✓</td><td>W1 ✗ · W2 ✓ · W3 ✓</td><td>W1 ✗ · W2 ✓ · W3 ✗</td></tr>
+        <tr><td class="head">τ = 0,2 – 0,5</td><td>W1 ✓ · W2 ✓ · W3 ✓</td><td>W1 ✗ · W2 ✓ · W3 ✓</td><td>W1 ✗ · W2 ✓ · W3 ✗</td></tr>
+      </tbody>
+    </table></div>
+    <p class="muted">Lösbarkeit aller Kombinationen, ermittelt mit dem aktuellen Notebook-Code.</p>
+  </section>
+
+  <section>
+    <div class="eyebrow">Ergebnis</div>
+    <h2>Gefundene Belegungspläne (τ = 0,5, PAR_SHARE = 0,5)</h2>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <label class="toggle"><input type="checkbox" id="flagDA" checked> Übergänge D → A markieren (C9, noch nicht umgesetzt)</label>
+    </div>
+    <div class="legend" id="legend"></div>
+    <div class="grid-scroll"><div id="plan"></div></div>
+    <p id="daNote" class="note"></p>
+    <h3>Kennzahlen je Studiengang</h3>
+    <div class="tablewrap"><table class="stack">
+      <thead><tr><th>SG</th><th>g</th><th>Slots (Grenzen)</th><th>pro Tag Mo–Fr</th><th>Ø Popularität</th><th style="min-width:170px">Band 6,15 – 7,15</th><th>parallel (min)</th><th>aufeinander&shy;folgend</th></tr></thead>
+      <tbody id="stats"></tbody>
+    </table></div>
+    <p class="muted">CP-SAT liefert die erste zulässige Belegung, die er findet. Es wird nichts optimiert. Ein erneuter Lauf kann bei gleicher Lösbarkeit einen anderen Plan ergeben.</p>
+  </section>
+
+  <section>
+    <div class="eyebrow">Nächste Schritte</div>
+    <h2>Was noch fehlt</h2>
+    <ul>
+      <li><b>C9 (4.5):</b> Für jeden Studiengang und jeden Tag d = Mo…Do gilt <code>used[d][D] + used[d+1][A] ≤ 1</code>. Die markierten Kacheln oben zeigen, dass die aktuellen Pläne diese Regel teilweise verletzen.</li>
+      <li><b>Unlösbare Wochen abfangen:</b> <code>solve()</code> gibt <code>None</code> zurück, die Ausgabeschleife stürzt dann in <code>show_plan</code> ab.</li>
+      <li><b>Validierung (4.6):</b> eine vom Solver unabhängige Funktion, die jede Regel am fertigen Plan prüft und OK/FAIL ausgibt.</li>
+      <li><b>Formale Definition (4.1):</b> X, D und C mit Begründung im Notebook ausformulieren. Der Abschnitt „Constraints“ ist dort noch leer.</li>
+      <li><b>4.7 – 4.10:</b> Lösungsraum, Experiment, Unlösbarkeit (der τ- und PAR_SHARE-Befund ist eine gute Grundlage), Reflexion, GenAI-Dokumentation.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+const DATA = {"weeks":{"Woche 1":{"groups":{"ES":3,"INF":1,"MB":8,"MT":4,"DS":4},"bounds":{"ES":[6,6],"INF":[2,2],"MB":[16,16],"MT":[8,8],"DS":[8,8]},"day":{"ES":[1,2],"INF":[0,1],"MB":[3,4],"MT":[1,2],"DS":[1,2]},"sol":{"Mo_A_R1":"MT","Mo_A_R2":"MT","Mo_B_R1":"MB","Mo_B_R2":"MB","Mo_C_R1":"MB","Mo_C_R2":"ES","Mo_D_R1":"INF","Mo_D_R2":"DS","Di_A_R1":"MB","Di_A_R2":"DS","Di_B_R1":"MB","Di_B_R2":"MT","Di_C_R1":"ES","Di_C_R2":"ES","Di_D_R1":"MB","Di_D_R2":"MB","Mi_A_R1":"DS","Mi_A_R2":"DS","Mi_B_R1":"MB","Mi_B_R2":"ES","Mi_C_R1":"MT","Mi_C_R2":"INF","Mi_D_R1":"MB","Mi_D_R2":"MB","Do_A_R1":"DS","Do_A_R2":"DS","Do_B_R1":"MT","Do_B_R2":"MT","Do_C_R1":"MB","Do_C_R2":"MB","Do_D_R1":"ES","Do_D_R2":"MB","Fr_A_R1":"MB","Fr_A_R2":"MB","Fr_B_R1":"ES","Fr_B_R2":"DS","Fr_C_R1":"MT","Fr_C_R2":"DS","Fr_D_R1":"MB","Fr_D_R2":"MT"},"stats":[{"SG":"DS","Slots":8,"mittl. Popularität":6.75,"parallel":2,"aufeinanderfolgend":1},{"SG":"ES","Slots":6,"mittl. Popularität":6.5,"parallel":1,"aufeinanderfolgend":0},{"SG":"INF","Slots":2,"mittl. Popularität":6.5,"parallel":0,"aufeinanderfolgend":0},{"SG":"MB","Slots":16,"mittl. Popularität":6.56,"parallel":5,"aufeinanderfolgend":3},{"SG":"MT","Slots":8,"mittl. Popularität":6.88,"parallel":2,"aufeinanderfolgend":1}]},"Woche 2":{"groups":{"ET":2,"MB":8,"MT":4,"DS":4},"bounds":{"ET":[4,5],"MB":[17,18],"MT":[8,9],"DS":[8,9]},"day":{"ET":[0,1],"MB":[3,4],"MT":[1,2],"DS":[1,2]},"sol":{"Mo_A_R1":"MB","Mo_A_R2":"MB","Mo_B_R1":"MB","Mo_B_R2":"MT","Mo_C_R1":"ET","Mo_C_R2":"MB","Mo_D_R1":"DS","Mo_D_R2":"DS","Di_A_R1":"MT","Di_A_R2":"DS","Di_B_R1":"MB","Di_B_R2":"DS","Di_C_R1":"MB","Di_C_R2":"MB","Di_D_R1":"ET","Di_D_R2":"MT","Mi_A_R1":"MB","Mi_A_R2":"DS","Mi_B_R1":"MT","Mi_B_R2":"MB","Mi_C_R1":"MB","Mi_C_R2":"MB","Mi_D_R1":"ET","Mi_D_R2":"MT","Do_A_R1":"MB","Do_A_R2":"MB","Do_B_R1":"DS","Do_B_R2":"ET","Do_C_R1":"DS","Do_C_R2":"MB","Do_D_R1":"MT","Do_D_R2":"MT","Fr_A_R1":"MT","Fr_A_R2":"MT","Fr_B_R1":"MB","Fr_B_R2":"MB","Fr_C_R1":"MB","Fr_C_R2":"MB","Fr_D_R1":"DS","Fr_D_R2":"DS"},"stats":[{"SG":"DS","Slots":9,"mittl. Popularität":6.44,"parallel":2,"aufeinanderfolgend":2},{"SG":"ET","Slots":4,"mittl. Popularität":6.75,"parallel":0,"aufeinanderfolgend":0},{"SG":"MB","Slots":18,"mittl. Popularität":6.78,"parallel":6,"aufeinanderfolgend":6},{"SG":"MT","Slots":9,"mittl. Popularität":6.56,"parallel":2,"aufeinanderfolgend":0}]},"Woche 3":{"groups":{"WIW":5,"ET":2,"MB":8,"DS":4},"bounds":{"WIW":[10,11],"ET":[4,5],"MB":[16,17],"DS":[8,9]},"day":{"WIW":[2,3],"ET":[0,1],"MB":[3,4],"DS":[1,2]},"sol":{"Mo_A_R1":"MB","Mo_A_R2":"MB","Mo_B_R1":"WIW","Mo_B_R2":"WIW","Mo_C_R1":"ET","Mo_C_R2":"MB","Mo_D_R1":"DS","Mo_D_R2":"DS","Di_A_R1":"MB","Di_A_R2":"MB","Di_B_R1":"DS","Di_B_R2":"WIW","Di_C_R1":"MB","Di_C_R2":"MB","Di_D_R1":"WIW","Di_D_R2":"WIW","Mi_A_R1":"WIW","Mi_A_R2":"MB","Mi_B_R1":"DS","Mi_B_R2":"MB","Mi_C_R1":"ET","Mi_C_R2":"DS","Mi_D_R1":"WIW","Mi_D_R2":"MB","Do_A_R1":"WIW","Do_A_R2":"ET","Do_B_R1":"MB","Do_B_R2":"DS","Do_C_R1":"WIW","Do_C_R2":"DS","Do_D_R1":"MB","Do_D_R2":"MB","Fr_A_R1":"WIW","Fr_A_R2":"MB","Fr_B_R1":"ET","Fr_B_R2":"MB","Fr_C_R1":"DS","Fr_C_R2":"DS","Fr_D_R1":"MB","Fr_D_R2":"WIW"},"stats":[{"SG":"DS","Slots":9,"mittl. Popularität":6.33,"parallel":2,"aufeinanderfolgend":2},{"SG":"ET","Slots":4,"mittl. Popularität":6.5,"parallel":0,"aufeinanderfolgend":0},{"SG":"MB","Slots":16,"mittl. Popularität":6.75,"parallel":4,"aufeinanderfolgend":2},{"SG":"WIW","Slots":11,"mittl. Popularität":6.82,"parallel":2,"aufeinanderfolgend":0}]}},"pop":{"Mo_A_R1":9,"Mo_B_R1":10,"Mo_C_R1":7,"Mo_D_R1":7,"Di_A_R1":8,"Di_B_R1":9,"Di_C_R1":6,"Di_D_R1":6,"Mi_A_R1":8,"Mi_B_R1":9,"Mi_C_R1":6,"Mi_D_R1":6,"Do_A_R1":7,"Do_B_R1":8,"Do_C_R1":5,"Do_D_R1":5,"Fr_A_R1":5,"Fr_B_R1":6,"Fr_C_R1":3,"Fr_D_R1":3}};
+const DAYS = ["Mo", "Di", "Mi", "Do", "Fr"];
+const DAY_NAMES = { Mo: "Montag", Di: "Dienstag", Mi: "Mittwoch", Do: "Donnerstag", Fr: "Freitag" };
+const SLOTS = ["A", "B", "C", "D"];
+const TIMES = { A: "08:00–10:00", B: "10:30–12:30", C: "13:00–15:00", D: "15:30–17:30" };
+
+function chip(s) {
+  return `<span class="chip" style="background:var(--c-${s});color:var(--t-${s})">${s}</span>`;
+}
+
+// Übergänge "letzter Slot (D) an Tag d → erster Slot (A) an Tag d+1" desselben Studiengangs
+function findDA(sol) {
+  const hits = [];
+  for (let i = 0; i < DAYS.length - 1; i++) {
+    const d = DAYS[i], n = DAYS[i + 1];
+    const late = new Set([sol[`${d}_D_R1`], sol[`${d}_D_R2`]]);
+    const early = new Set([sol[`${n}_A_R1`], sol[`${n}_A_R2`]]);
+    late.forEach(s => { if (early.has(s)) hits.push({ s, from: d, to: n }); });
+  }
+  return hits;
+}
+
+function flaggedSlots(sol) {
+  const flagged = new Set();
+  findDA(sol).forEach(h => {
+    ["R1", "R2"].forEach(r => {
+      if (sol[`${h.from}_D_${r}`] === h.s) flagged.add(`${h.from}_D_${r}`);
+      if (sol[`${h.to}_A_${r}`] === h.s) flagged.add(`${h.to}_A_${r}`);
+    });
+  });
+  return flagged;
+}
+
+function cellHTML(sol, d, t, flagged) {
+  const a = sol[`${d}_${t}_R1`], b = sol[`${d}_${t}_R2`];
+  const f1 = flagged.has(`${d}_${t}_R1`), f2 = flagged.has(`${d}_${t}_R2`);
+  if (a === b) {
+    return `<div class="tile wide${f1 || f2 ? " flag" : ""}" style="background:var(--c-${a});color:var(--t-${a})" title="${a}: ${DAY_NAMES[d]} ${t}, beide Räume">${a}<small>R1 + R2 parallel</small></div>`;
+  }
+  return `<div class="tile${f1 ? " flag" : ""}" style="background:var(--c-${a});color:var(--t-${a})" title="${a}: ${DAY_NAMES[d]} ${t}, Raum 1">${a}<small>R1</small></div>` +
+         `<div class="tile${f2 ? " flag" : ""}" style="background:var(--c-${b});color:var(--t-${b})" title="${b}: ${DAY_NAMES[d]} ${t}, Raum 2">${b}<small>R2</small></div>`;
+}
+
+// Schmale Bildschirme: ein Block pro Tag statt einer breiten Tabelle
+function renderPlanByDay(el, week, opts = {}) {
+  const sol = DATA.weeks[week].sol;
+  const flagged = opts.flagDA ? flaggedSlots(sol) : new Set();
+  el.innerHTML = `<div class="dayplan" aria-label="Belegungsplan ${week}">` + DAYS.map(d =>
+    `<div class="daycard"><h4>${DAY_NAMES[d]}</h4>` + SLOTS.map(t =>
+      `<div class="drow"><span class="sl"><b>${t}</b>${TIMES[t].split("–")[0]}</span><div class="cell">${cellHTML(sol, d, t, flagged)}</div></div>`
+    ).join("") + `</div>`
+  ).join("") + `</div>`;
+}
+
+function renderPlan(el, week, opts = {}) {
+  const sol = DATA.weeks[week].sol;
+  const flagged = new Set();
+  if (opts.flagDA) {
+    findDA(sol).forEach(h => {
+      ["R1", "R2"].forEach(r => {
+        if (sol[`${h.from}_D_${r}`] === h.s) flagged.add(`${h.from}_D_${r}`);
+        if (sol[`${h.to}_A_${r}`] === h.s) flagged.add(`${h.to}_A_${r}`);
+      });
+    });
+  }
+  let html = `<div class="plan" role="table" aria-label="Belegungsplan ${week}"><div></div>`;
+  DAYS.forEach(d => { html += `<div class="hd" role="columnheader">${opts.longDays ? DAY_NAMES[d] : d}</div>`; });
+  SLOTS.forEach(t => {
+    html += `<div class="slotlbl" role="rowheader"><b>${t}</b>${TIMES[t].replace("–", "–<br>")}</div>`;
+    DAYS.forEach(d => {
+      const a = sol[`${d}_${t}_R1`], b = sol[`${d}_${t}_R2`];
+      const f1 = flagged.has(`${d}_${t}_R1`), f2 = flagged.has(`${d}_${t}_R2`);
+      html += `<div class="cell" role="cell">`;
+      if (a === b) {
+        html += `<div class="tile wide${f1 || f2 ? " flag" : ""}" style="background:var(--c-${a});color:var(--t-${a})" title="${a}: ${DAY_NAMES[d]} ${t}, beide Räume">${a}<small>R1 + R2 parallel</small></div>`;
+      } else {
+        html += `<div class="tile${f1 ? " flag" : ""}" style="background:var(--c-${a});color:var(--t-${a})" title="${a}: ${DAY_NAMES[d]} ${t}, Raum 1">${a}<small>R1</small></div>`;
+        html += `<div class="tile${f2 ? " flag" : ""}" style="background:var(--c-${b});color:var(--t-${b})" title="${b}: ${DAY_NAMES[d]} ${t}, Raum 2">${b}<small>R2</small></div>`;
+      }
+      html += `</div>`;
+    });
+  });
+  el.innerHTML = html + `</div>`;
+}
+
+function renderLegend(el, week) {
+  const g = DATA.weeks[week].groups;
+  el.innerHTML = Object.keys(g).map(s =>
+    `<span><i class="sw" style="background:var(--c-${s})"></i>${s} · ${g[s]} ${g[s] === 1 ? "Kursgruppe" : "Kursgruppen"}</span>`
+  ).join("");
+}
+
+function setupTabs(tabsEl, onChange) {
+  const weeks = Object.keys(DATA.weeks);
+  tabsEl.innerHTML = weeks.map((w, i) =>
+    `<button type="button" role="tab" aria-selected="${i === 0}" data-week="${w}">${w}</button>`).join("");
+  tabsEl.addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    tabsEl.querySelectorAll("button").forEach(x => x.setAttribute("aria-selected", x === b));
+    onChange(b.dataset.week);
+  });
+  onChange(weeks[0]);
+}
+
+const W = DATA.weeks;
+document.getElementById("weeksTable").innerHTML = Object.entries(W).map(([w, d]) =>
+  `<tr><td class="head">${w}</td><td class="full">${Object.entries(d.groups).map(([s, g]) => chip(s) + " " + g).join(" &nbsp;")}</td><td>${Object.values(d.groups).reduce((a, b) => a + b, 0)}</td></tr>`).join("");
+
+document.getElementById("boundsTable").innerHTML = Object.entries(W).map(([w, d]) => {
+  const tot = Object.values(d.groups).reduce((a, b) => a + b, 0);
+  return Object.entries(d.groups).map(([s, g], i) => {
+    const [lo, hi] = d.bounds[s], [dlo, dhi] = d.day[s];
+    return `<tr><td class="rep${i === 0 ? "" : " hide-wide"}">${w}</td><td>${chip(s)}</td><td>${g}</td><td>${(g * 40 / tot).toFixed(2).replace(".", ",")}</td><td>${lo === hi ? lo : lo + "–" + hi}</td><td>${dlo}–${dhi}</td><td>${dlo >= 1 ? '<span class="yes">ja</span>' : '<span class="muted">nein</span>'}</td></tr>`;
+  }).join("");
+}).join("");
+
+const pmin = 3, pmax = 10;
+let heat = `<div></div>` + DAYS.map(d => `<div class="h">${d}</div>`).join("");
+SLOTS.forEach(t => {
+  heat += `<div class="r">${t}</div>`;
+  DAYS.forEach(d => {
+    const v = DATA.pop[`${d}_${t}_R1`], pct = Math.round(8 + (v - pmin) / (pmax - pmin) * 62);
+    heat += `<div class="v" style="background:color-mix(in srgb, var(--accent) ${pct}%, var(--surface))" title="${DAY_NAMES[d]} ${t}: p = ${v}">${v}</div>`;
+  });
+});
+document.getElementById("heat").innerHTML = heat;
+
+const flagBox = document.getElementById("flagDA");
+let current;
+function show(week) {
+  current = week;
+  (narrow.matches ? renderPlanByDay : renderPlan)(document.getElementById("plan"), week, { flagDA: flagBox.checked });
+  renderLegend(document.getElementById("legend"), week);
+  const d = W[week], hits = findDA(d.sol);
+  document.getElementById("daNote").innerHTML = flagBox.checked
+    ? (hits.length
+      ? `<b>${hits.length} Übergänge D → A</b> in ${week}: ` + hits.map(h => `${h.s} (${h.from} D → ${h.to} A)`).join(", ") + ". Sie sind zulässig, weil C9 noch fehlt."
+      : `Keine Übergänge D → A in ${week}.`)
+    : "";
+  const scale = v => ((v - 5.9) / (7.4 - 5.9) * 100).toFixed(1);
+  document.getElementById("stats").innerHTML = d.stats.map(r => {
+    const s = r.SG, g = d.groups[s], [lo, hi] = d.bounds[s];
+    const perDay = DAYS.map(day => Object.entries(d.sol).filter(([v, x]) => x === s && v.startsWith(day)).length).join(" · ");
+    const minPar = g >= 3 ? Math.floor(lo * 0.5 / 2) : (g === 1 ? "= 0" : "–");
+    const p = r["mittl. Popularität"];
+    const band = `<div class="band" aria-label="Ø ${p} im Band 6,15 bis 7,15"><div class="rail"></div><div class="ok" style="left:${scale(6.15)}%;width:${scale(7.15) - scale(6.15)}%"></div><div class="mean" style="left:${scale(6.65)}%"></div><div class="dot" style="left:${scale(p)}%;background:var(--c-${s})"></div></div>`;
+    return `<tr><td>${chip(s)}</td><td>${g}</td><td>${r.Slots} (${lo === hi ? lo : lo + "–" + hi})</td><td class="mono">${perDay}</td><td>${p.toFixed(2).replace(".", ",")}</td><td class="full">${band}</td><td>${r.parallel} (${minPar})</td><td>${r.aufeinanderfolgend}</td></tr>`;
+  }).join("");
+  labelTables();
+}
+// Spaltenüberschrift als Label in jede Zelle, damit Tabellen auf dem Handy als Karten lesbar bleiben
+function labelTables() {
+  document.querySelectorAll("table.stack").forEach(t => {
+    const heads = [...t.querySelectorAll("thead th")].map(th => th.textContent.trim());
+    t.querySelectorAll("tbody tr").forEach(tr => [...tr.children].forEach((td, i) => td.setAttribute("data-label", heads[i] || "")));
+  });
+}
+const narrow = window.matchMedia("(max-width: 680px)");
+narrow.addEventListener("change", () => show(current));
+flagBox.addEventListener("change", () => show(current));
+setupTabs(document.getElementById("tabs"), show);
+</script>

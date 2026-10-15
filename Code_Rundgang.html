@@ -1,0 +1,856 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prüfungsraum-CSP Code-Rundgang</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,600;1,400&family=STIX+Two+Text:ital@0;1&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+/* Layout: Stundenplan-Raster – linksbündige Spalte, Prüfungsraster als zentrales Bild */
+:root {
+  --bg: #f5f7f9;
+  --surface: #ffffff;
+  --fg: #16202b;
+  --muted: #586776;
+  --line: #d6dde4;
+  --accent: #c2562b;
+  --accent-soft: #f6e3d9;
+  --ok: #247a5c;
+  --warn: #b2401f;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --font-body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --font-math: "STIX Two Text", "Cambria Math", "Times New Roman", serif;
+  --c-MB: #2f6fb3; --t-MB: #ffffff;
+  --c-DS: #b8502a; --t-DS: #ffffff;
+  --c-MT: #247a5c; --t-MT: #ffffff;
+  --c-ES: #7d55b8; --t-ES: #ffffff;
+  --c-INF: #e0ad2c; --t-INF: #1d1808;
+  --c-ET: #b83a72; --t-ET: #ffffff;
+  --c-WIW: #3f7280; --t-WIW: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161c; --surface: #19212a; --fg: #e4e9ee; --muted: #9aa8b5; --line: #2c3743;
+    --accent: #e8814f; --accent-soft: #3a2519; --ok: #5cc49c; --warn: #f08a63;
+    --c-MB: #3d7cc2; --c-DS: #c25e36; --c-MT: #2e8a69; --c-ES: #8a63c7; --c-INF: #e0ad2c; --c-ET: #c44a80; --c-WIW: #4d8291;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161c; --surface: #19212a; --fg: #e4e9ee; --muted: #9aa8b5; --line: #2c3743;
+  --accent: #e8814f; --accent-soft: #3a2519; --ok: #5cc49c; --warn: #f08a63;
+  --c-MB: #3d7cc2; --c-DS: #c25e36; --c-MT: #2e8a69; --c-ES: #8a63c7; --c-INF: #e0ad2c; --c-ET: #c44a80; --c-WIW: #4d8291;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.6; }
+.wrap { max-width: 980px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 80px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 56px; }
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.15; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 3.1rem); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 1.65rem; font-weight: 650; }
+h3 { font-size: 1.15rem; font-weight: 650; }
+p { margin: 0; max-width: 68ch; }
+section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; min-width: 0; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lede { font-size: 1.15rem; color: var(--muted); max-width: 62ch; }
+.muted { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 0.88em; }
+code { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+.math { font-family: var(--font-math); font-size: 1.12em; }
+.math i { font-style: italic; }
+.formula { font-family: var(--font-math); font-size: 1.25rem; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; overflow-x: auto; white-space: nowrap; }
+.frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 3px; }
+.frac > span:first-child { border-bottom: 1px solid currentColor; padding: 0 4px; }
+.frac > span:last-child { padding: 0 4px; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: 0.93rem; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.chip { display: inline-block; min-width: 2.6em; text-align: center; font-family: var(--font-mono); font-size: 0.8rem; font-weight: 600; padding: 1px 7px; border-radius: 4px; }
+.pill { display: inline-block; font-family: var(--font-mono); font-size: 0.72rem; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.pill.ok { color: var(--ok); }
+.pill.open { color: var(--warn); }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.cols > * { min-width: 0; }
+.note { border-left: 3px solid var(--accent); padding: 4px 0 4px 16px; max-width: 68ch; }
+ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 68ch; }
+
+/* Wochenraster */
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.tabs button { font: inherit; font-family: var(--font-mono); font-size: 0.85rem; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.tabs button:focus-visible, .toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.grid-scroll { overflow-x: auto; }
+.plan { display: grid; grid-template-columns: 74px repeat(5, minmax(96px, 1fr)); gap: 6px; min-width: 600px; }
+.plan .hd { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); text-align: center; padding-bottom: 2px; }
+.plan .slotlbl { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); display: flex; flex-direction: column; justify-content: center; line-height: 1.25; }
+.plan .slotlbl b { font-size: 1rem; color: var(--fg); }
+.cell { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; min-height: 52px; }
+.tile { border-radius: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: var(--font-mono); font-weight: 600; font-size: 0.86rem; line-height: 1.1; position: relative; }
+.tile small { font-weight: 400; font-size: 0.64rem; opacity: 0.85; }
+.tile.wide { grid-column: span 2; }
+.tile.flag { outline: 2.5px dashed var(--warn); outline-offset: 2px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 0.88rem; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+.toggle { font: inherit; font-size: 0.85rem; display: inline-flex; gap: 8px; align-items: center; cursor: pointer; }
+
+.dayplan { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 12px; }
+.daycard { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px; display: grid; gap: 5px; min-width: 0; }
+.daycard h4 { margin: 0 0 2px; font-family: var(--font-display); font-size: 1rem; font-weight: 650; }
+.drow { display: grid; grid-template-columns: 40px 1fr; gap: 6px; align-items: stretch; }
+.drow .sl { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); display: flex; flex-direction: column; justify-content: center; line-height: 1.2; }
+.drow .sl b { font-size: 0.92rem; color: var(--fg); }
+.drow .cell { min-height: 42px; }
+.drow .tile { font-size: 0.8rem; }
+
+@media (max-width: 520px) {
+  .wrap { padding-inline: 16px; gap: 44px; }
+  .formula { font-size: 1.05rem; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .tile { transition: transform .15s ease; }
+}
+
+:root {
+  --code-bg: #eef2f6; --code-fg: #1d2a36;
+  --hl-kw: #9b3b16; --hl-str: #23704f; --hl-num: #7d55b8; --hl-com: #6a7886; --hl-fn: #2a62a3;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --code-bg: #0d1217; --code-fg: #dbe3ea; --hl-kw: #f09a6e; --hl-str: #7fd1a9; --hl-num: #c2a6f0; --hl-com: #7f8e9b; --hl-fn: #86b6ec; }
+}
+:root[data-theme="dark"] { --code-bg: #0d1217; --code-fg: #dbe3ea; --hl-kw: #f09a6e; --hl-str: #7fd1a9; --hl-num: #c2a6f0; --hl-com: #7f8e9b; --hl-fn: #86b6ec; }
+
+/* Ablauf */
+.flow { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; counter-reset: step; max-width: none; }
+.flow li { position: relative; }
+.flow a { display: grid; gap: 4px; height: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--fg); text-decoration: none; }
+.flow a:hover, .flow a:focus-visible { border-color: var(--accent); outline: none; }
+.flow .n { font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent); letter-spacing: 0.06em; }
+.flow b { font-family: var(--font-mono); font-size: 0.86rem; font-weight: 600; overflow-wrap: anywhere; }
+.flow span.d { font-size: 0.82rem; color: var(--muted); line-height: 1.35; }
+
+/* Schritt-Layout: Code links, Erklärung rechts; auf schmalen Bildschirmen untereinander */
+.step-head { display: grid; gap: 6px; }
+.walk { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.walk > * { min-width: 0; }
+.explain { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.explain > *, .step-head > * { min-width: 0; }
+.step-head { grid-template-columns: minmax(0, 1fr); }
+.explain p, .explain li { font-size: 0.96rem; }
+pre.code { margin: 0; background: var(--code-bg); color: var(--code-fg); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.55; tab-size: 4; border: 1px solid var(--line); }
+pre.code code { background: none; border: 0; padding: 0; font-size: inherit; }
+.cellref { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); margin-bottom: 6px; display: block; }
+.hljs-keyword, .hljs-built_in, .hljs-literal { color: var(--hl-kw); }
+.hljs-string, .hljs-subst { color: var(--hl-str); }
+.hljs-number { color: var(--hl-num); }
+.hljs-comment { color: var(--hl-com); font-style: italic; }
+.hljs-title, .hljs-title.function_ { color: var(--hl-fn); }
+details.more { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+details.more summary { cursor: pointer; padding: 10px 14px; font-family: var(--font-mono); font-size: 0.82rem; }
+details.more pre.code { border-radius: 0 0 8px 8px; border: 0; border-top: 1px solid var(--line); }
+.out { font-family: var(--font-mono); font-size: 0.8rem; background: var(--surface); border: 1px dashed var(--line); border-radius: 8px; padding: 10px 14px; overflow-x: auto; white-space: pre; }
+.out-label { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.mat { border-collapse: collapse; font-family: var(--font-mono); font-size: 0.8rem; width: auto; }
+.mat th, .mat td { padding: 5px 9px; text-align: center; border-bottom: 1px solid var(--line); }
+.mat td.one { font-weight: 700; }
+.mat td.sum { color: var(--ok); font-weight: 600; }
+.coef { display: grid; grid-template-columns: 28px repeat(5, minmax(0, 1fr)); gap: 3px; font-family: var(--font-mono); font-size: 0.78rem; max-width: 460px; }
+.coef .h { color: var(--muted); text-align: center; font-size: 0.72rem; }
+.coef .r { color: var(--muted); display: flex; align-items: center; }
+.coef .v { text-align: center; padding: 7px 0; border-radius: 4px; color: var(--fg); }
+.calc { font-family: var(--font-mono); font-size: 0.84rem; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; overflow-wrap: anywhere; }
+.calc .ok { color: var(--ok); font-weight: 600; }
+.warnbox { border-left: 3px solid var(--warn); padding: 4px 0 4px 14px; }
+.warnbox b { color: var(--warn); }
+@media (max-width: 860px) {
+  .walk { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 520px) {
+  pre.code { font-size: 0.74rem; padding: 12px; }
+  .flow { grid-template-columns: minmax(0, 1fr); }
+}
+</style>
+
+<main class="wrap">
+  <header style="display:grid;gap:14px">
+    <div class="eyebrow">CSP_GruppeC.ipynb · Christopher Klein &amp; Colin Vavra</div>
+    <h1>Prüfungsraum-CSP Code-Rundgang</h1>
+    <p class="lede">Der Python-Code des Notebooks in der Reihenfolge, in der er arbeitet: von den Eingabedaten über das Constraint-Modell bis zum fertigen Wochenplan. Zu jedem Schritt gibt es den Originalcode, eine Erklärung und ein Beispiel mit echten Werten aus Woche 1.</p>
+  </header>
+
+  <section>
+    <div class="eyebrow">Überblick</div>
+    <h2>Der Ablauf in neun Schritten</h2>
+    <ol class="flow">
+      <li><a href="#s1"><span class="n">1 · Zelle 5, 7</span><b>read_csv / json.load</b><span class="d">Wochen und Präferenzen einlesen</span></a></li>
+      <li><a href="#s2"><span class="n">2 · Zelle 10</span><b>variables</b><span class="d">40 Raum-Zeit-Slots benennen</span></a></li>
+      <li><a href="#s3"><span class="n">3 · Zelle 12</span><b>demand_bounds()</b><span class="d">Slot-Grenzen aus Kursgruppen</span></a></li>
+      <li><a href="#s4"><span class="n">4 · Zelle 15</span><b>build_csp()</b><span class="d">Modell, Variablen, Bedarf</span></a></li>
+      <li><a href="#s5"><span class="n">5 · Zelle 17, 19</span><b>add_popularity_constraints()</b><span class="d">Faire Popularität</span></a></li>
+      <li><a href="#s6"><span class="n">6 · Zelle 21, 22</span><b>add_structure_constraints()</b><span class="d">Parallel und aufeinanderfolgend</span></a></li>
+      <li><a href="#s7"><span class="n">7 · Zelle 15</span><b>solve()</b><span class="d">CP-SAT lösen lassen</span></a></li>
+      <li><a href="#s8"><span class="n">8 · Zelle 23, 24</span><b>show_plan() …</b><span class="d">Plan und Kennzahlen anzeigen</span></a></li>
+      <li><a href="#s9"><span class="n">9 · Zelle 24</span><b>for week in weeks</b><span class="d">Alles für jede Woche ausführen</span></a></li>
+    </ol>
+  </section>
+
+  <!-- 1 -->
+  <section id="s1">
+    <div class="step-head"><div class="eyebrow">Schritt 1</div><h2>Daten einlesen</h2></div>
+    <div class="walk">
+      <div><span class="cellref">Zelle 5 + 7</span><pre class="code"><code class="language-python">import pandas as pd
+
+exam_weeks = pd.read_csv(&#x27;./data/exam_weeks.csv&#x27;, delimiter=&#x27;;&#x27;)
+exam_weeks.columns = [&#x27;exam_week&#x27;,&#x27;study_program&#x27;,&#x27;course_groups&#x27;,&#x27;cohorts&#x27;]
+#exam_weeks.head()
+print(exam_weeks.to_string())
+
+import json
+
+with open(&#x27;./data/preferences.json&#x27;) as f:
+    prefs = json.load(f)
+
+# Popularität der Zeitslots (A-D) und Wochentage
+print(&quot;Zeitslots:&quot;, {t: v[&quot;preference&quot;] for t, v in prefs[&quot;time_slot_preferences&quot;].items()})
+print(&quot;Wochentage:&quot;, prefs[&quot;weekday_preferences&quot;])
+
+# Regeln für parallele / aufeinanderfolgende Termine
+print(&quot;\nStruktur-Regeln:&quot;)
+for rule in prefs[&quot;appointment_structure_preferences&quot;]:
+    print(f&#x27;  {rule[&quot;condition&quot;]}; parallel: {rule[&quot;parallel&quot;]},  aufeinanderfolgend: {rule[&quot;sequential&quot;]}&#x27;)</code></pre></div>
+      <div class="explain">
+        <p><code>exam_weeks</code> ist ein pandas-DataFrame mit einer Zeile pro Studiengang und Woche. Die Spalten werden auf englische Namen umbenannt, damit der restliche Code sie einheitlich anspricht.</p>
+        <p><code>prefs</code> ist ein normales Python-Dict aus der JSON-Datei. Es enthält die Präferenzwerte für Zeitslots und Wochentage und die drei Strukturregeln.</p>
+        <div class="out-label">Ausgabe (gekürzt)</div>
+        <div class="out">   exam_week study_program  course_groups  cohorts
+0    Woche 1            ES              3        1
+1    Woche 1           INF              1        1
+2    Woche 1            MB              8        1
+…
+Zeitslots: {'A': 4, 'B': 5, 'C': 2, 'D': 2}
+Wochentage: {'Montag': 5, …, 'Freitag': 1}</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section id="s2">
+    <div class="step-head"><div class="eyebrow">Schritt 2</div><h2>Die 40 Variablen benennen</h2></div>
+    <div class="walk">
+      <div><span class="cellref">Zelle 10</span><pre class="code"><code class="language-python">import math
+
+# Mengen definieren
+weekdays = [&quot;Mo&quot;, &quot;Di&quot;, &quot;Mi&quot;, &quot;Do&quot;, &quot;Fr&quot;]
+slots = [&quot;A&quot;, &quot;B&quot;, &quot;C&quot;, &quot;D&quot;]
+rooms = [&quot;R1&quot;, &quot;R2&quot;]
+
+# X: eine Variable für jede Kombination aus Tag, Zeitslot und Raum
+variables = [f&quot;{day}_{slot}_{room}&quot; for day in weekdays for slot in slots for room in rooms]
+N_SLOTS = len(variables)  # 40
+SLOTS_PER_DAY = len(slots) * len(rooms)  # 4 Slots in jeweils 2 Räumen = 8 Slots
+
+weeks = exam_weeks[&quot;exam_week&quot;].unique().tolist()
+print(weeks, f&quot;, Slots: {N_SLOTS}&quot;, f&quot;, Slots per Day: {SLOTS_PER_DAY}&quot;)</code></pre></div>
+      <div class="explain">
+        <p>Die List Comprehension geht alle Tage, Slots und Räume durch und baut daraus Namen wie <code>Mo_A_R1</code>. Die Reihenfolge ist Tag → Slot → Raum, also <code>Mo_A_R1</code>, <code>Mo_A_R2</code>, <code>Mo_B_R1</code> …</p>
+        <p>Diese Namen sind die fachlichen CSP-Variablen <span class="math"><i>X</i></span>. Alle späteren Funktionen arbeiten mit ihnen und zerlegen sie bei Bedarf mit <code>v.split("_")</code> wieder in Tag, Slot und Raum.</p>
+        <p><code>SLOTS_PER_DAY = 8</code> wird später für den Tagesbedarf gebraucht.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section id="s3">
+    <div class="step-head"><div class="eyebrow">Schritt 3</div><h2>Bedarf in Slot-Grenzen umrechnen</h2></div>
+    <div class="walk">
+      <div><span class="cellref">Zelle 12</span><pre class="code"><code class="language-python">def demand_bounds(week_df, n_slots=N_SLOTS):
+    groups = dict(zip(
+        week_df[&quot;study_program&quot;],
+        week_df[&quot;course_groups&quot;] * week_df[&quot;cohorts&quot;]
+    ))
+
+    total_of_week = sum(groups.values()) # Gesamtbedarf dieser Woche
+
+    # Rechnung für lo, hi
+    # Anzahl Kursgruppen des Studiengangs (g) * Gesamt-Slots (n_slots) im Verhältnis zu Anzahl Kursgruppen der Woche (total_of_week)
+    return {
+        s: (
+            math.floor((g * n_slots) / total_of_week), # lo
+            math.ceil((g * n_slots) / total_of_week) # hi
+        )
+        for s, g in groups.items() # s = StudyProgram, g=Kursgruppen
+    }
+    # ergibt Return Wert mit Dict s: (lo, hi)</code></pre></div>
+      <div class="explain">
+        <p>Für jeden Studiengang wird sein Anteil an allen Kursgruppen der Woche auf <code>n_slots</code> hochgerechnet und dann ab- und aufgerundet. Das Ergebnis ist ein Dict <code>{studiengang: (lo, hi)}</code>.</p>
+        <p>Dieselbe Funktion wird zweimal benutzt: mit dem Standardwert <code>n_slots = 40</code> für die ganze Woche und mit <code>n_slots = 8</code> für einen einzelnen Tag.</p>
+        <div class="out-label">Woche 1, Σ g = 20</div>
+        <div class="tablewrap"><table class="mat" id="boundsEx"></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section id="s4">
+    <div class="step-head"><div class="eyebrow">Schritt 4</div><h2>Das Modell aufbauen</h2></div>
+    <p>CP-SAT kennt keine Variablen mit Werten wie „MB“. Deshalb gibt es für jede Kombination aus Slot und Studiengang eine Boolesche Variable <code>x[v, s]</code>: 1 heißt „Slot <i>v</i> gehört Studiengang <i>s</i>“.</p>
+    <div class="walk">
+      <div><span class="cellref">Zelle 15 · Teil 1</span><pre class="code"><code class="language-python">from ortools.sat.python import cp_model
+
+def build_csp(week):
+    week_df = exam_weeks[exam_weeks[&quot;exam_week&quot;] == week]
+    programs = week_df[&quot;study_program&quot;].tolist()   # D: nur Studiengänge dieser Woche
+
+    model = cp_model.CpModel()
+    x = {(v, s): model.NewBoolVar(f&quot;{v}_{s}&quot;) for v in variables for s in programs} # variables kommt von der Definition am Anfang des Dokuments
+    # Beispiel: (&#x27;Mo_A_R1&#x27;, &#x27;ES&#x27;): Mo_A_R1_ES(0..1)
+
+    # In einem Slot kann nur genau 1 Studiengang enthalten sein (umgekehrt bereits durch Modell abgesichert)
+    for v in variables:
+        model.AddExactlyOne(
+            x[v, s] for s in programs
+        )</code></pre></div>
+      <div class="explain">
+        <p><code>programs</code> enthält nur die Studiengänge dieser Woche. Damit ist die Domäne festgelegt.</p>
+        <p><code>AddExactlyOne</code> verlangt, dass in jeder Zeile genau eine 1 steht. Ein Slot gehört also genau einem Studiengang.</p>
+        <div class="out-label">Ausschnitt aus x (Woche 1, gelöst)</div>
+        <div class="tablewrap"><table class="mat" id="xMat"></table></div>
+      </div>
+    </div>
+    <div class="walk">
+      <div><span class="cellref">Zelle 15 · Teil 2</span><pre class="code"><code class="language-python">    # Bedarfe (4.2)
+
+    # -&gt; Bedarf pro Woche
+    for s, (lo, hi) in demand_bounds(week_df).items():
+        model.AddLinearConstraint(
+            sum(x[v, s] for v in variables), # Ergibt lineare Summe: x_{1,s} + x_{2,s} + ... +  x_{n,s} -&gt; wird erst später vom Solver ausgewertet !!
+            lo, # Constraint garantiert Einhaltung der Untergrenze
+            hi  # ... und Obergrenze
+        )
+    # =&gt; Solver weiß dann, dass Lösung für Lineare Gleichung zwischen LO und HI liegen muss        
+
+    # -&gt; Bedarf pro Tag (analog Woche)
+    for day in weekdays:
+        day_vars = [v for v in variables if v.startswith(day)] # nur Variablen des betroffenen Tages heranziehen
+        for s, (lo, hi) in demand_bounds(week_df, SLOTS_PER_DAY).items():
+            model.AddLinearConstraint(
+                sum(x[v, s] for v in day_vars), 
+                lo, 
+                hi
+            )</code></pre></div>
+      <div class="explain">
+        <p><code>sum(x[v, s] for v in variables)</code> rechnet hier noch nichts aus. Weil <code>x</code> Solver-Variablen enthält, entsteht ein linearer Ausdruck, den CP-SAT erst beim Lösen auswertet.</p>
+        <p><code>AddLinearConstraint(ausdruck, lo, hi)</code> heißt: <span class="math">lo ≤ ausdruck ≤ hi</span>. Das passiert einmal pro Studiengang für die Woche und einmal pro Studiengang und Tag für die 8 Slots dieses Tages.</p>
+        <p>Woche 1 erzeugt so 5 Wochen- und 25 Tagesbedingungen.</p>
+      </div>
+    </div>
+    <div class="walk">
+      <div><span class="cellref">Zelle 15 · Teil 3</span><pre class="code"><code class="language-python">    # Popularität (4.3)
+    add_popularity_constraints(model, x, programs) # siehe unten
+    
+    # Parallele / Aufeinanderfolgende Termine (4.4)
+    add_structure_constraints(model, x, week_df, programs) # siehe unten
+
+    return model, x</code></pre></div>
+      <div class="explain">
+        <p>Die übrigen Constraints stehen in eigenen Funktionen (Schritt 5 und 6). Sie bekommen <code>model</code> und <code>x</code> übergeben und fügen ihre Bedingungen direkt in dasselbe Modell ein.</p>
+        <p>Die Funktionen werden erst in späteren Zellen definiert. Das funktioniert, weil Python den Namen erst beim Aufruf von <code>build_csp</code> nachschlägt, nicht beim Definieren.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section id="s5">
+    <div class="step-head"><div class="eyebrow">Schritt 5</div><h2>Popularität fair verteilen</h2></div>
+    <div class="walk">
+      <div><span class="cellref">Zelle 17 (ohne Übersichtstabelle)</span><pre class="code"><code class="language-python"># Wochentage im Code (&quot;Mo&quot;) -&gt; Namen in preferences.json (&quot;Montag&quot;)
+day_names = {&quot;Mo&quot;: &quot;Montag&quot;, &quot;Di&quot;: &quot;Dienstag&quot;, &quot;Mi&quot;: &quot;Mittwoch&quot;, &quot;Do&quot;: &quot;Donnerstag&quot;, &quot;Fr&quot;: &quot;Freitag&quot;}
+
+# Popularität eines Slots berechnen - p(d, t)
+def popularity(day, slot):
+    weekday_pop = prefs[&quot;weekday_preferences&quot;][day_names[day]]
+    slot_pop = prefs[&quot;time_slot_preferences&quot;][slot][&quot;preference&quot;]
+    return weekday_pop + slot_pop
+
+# Popularität für alle Slots berechnen
+pop = {}
+
+for v in variables:
+    day, slot, _ = v.split(&quot;_&quot;)
+    pop[v] = popularity(day, slot)
+
+# Beispiel: {&#x27;Mo_A_R1&#x27;: 9, &#x27;Mo_A_R2&#x27;: 9, &#x27;Mo_B_R1&#x27;: 10, ...}
+#print(pop)
+
+POP_TOL = 0.5   # erlaubte Abweichung der mittleren Popularität vom Wochenmittel
+
+popTotal = sum(pop.values())
+#print(f&quot;pT: {popTotal}&quot;)
+
+print(&quot;mittlere Popularität aller Slots:&quot;, popTotal / N_SLOTS)</code></pre></div>
+      <div class="explain">
+        <p><code>popularity(day, slot)</code> addiert Tages- und Slotwert. <code>day_names</code> übersetzt dafür die Kürzel im Code in die Schlüssel der JSON-Datei.</p>
+        <p><code>pop</code> speichert den Wert für jede der 40 Variablen. Beide Räume eines Zeitpunkts haben denselben Wert. <code>popTotal</code> ist immer 266, der Mittelwert also 6,65.</p>
+      </div>
+    </div>
+    <div class="walk">
+      <div><span class="cellref">Zelle 19</span><pre class="code"><code class="language-python">def add_popularity_constraints(model, x, programs):
+    #popTotal = sum(pop.values())     # 266 = Summe der Popularität aller 40 Slots # schon oben definiert
+    tol = round(POP_TOL * N_SLOTS)    # 0.5 * 40 = 20 (Toleranz, ebenfalls mit 40 multipliziert)
+
+    for s in programs:
+        n_s = sum(x[v, s] for v in variables)   # Anzahl Slots von s (lineare Summe, wie beim Bedarf)
+
+        # Abweichung vom Mittel, mit 40 multipliziert, damit alles ganzzahlig bleibt:
+        # (40 * p(v) - 266) ist &gt; 0 für überdurchschnittliche und &lt; 0 für unterdurchschnittliche Slots
+        deviation = sum(
+            (N_SLOTS * pop[v] - popTotal) * x[v, s] 
+            for v in variables
+        )
+
+        model.Add(deviation &lt;= tol * n_s)    # nicht zu viele attraktive Slots
+        model.Add(deviation &gt;= -tol * n_s)   # nicht zu viele unattraktive Slots</code></pre></div>
+      <div class="explain">
+        <p>Jeder Slot bekommt den Faktor <code>40 · p − 266</code>. Positiv heißt besser als der Durchschnitt, negativ heißt schlechter. Die Summe über die Slots eines Studiengangs muss zwischen <code>−20 · n_s</code> und <code>+20 · n_s</code> liegen.</p>
+        <div class="out-label">Faktor 40 · p − 266 je Tag und Slot</div>
+        <div class="coef" id="coef"></div>
+        <div class="out-label">Nachgerechnet: INF in Woche 1</div>
+        <div class="calc" id="infCalc"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section id="s6">
+    <div class="step-head"><div class="eyebrow">Schritt 6</div><h2>Parallele und aufeinanderfolgende Termine</h2></div>
+    <div class="walk">
+      <div><span class="cellref">Zelle 21</span><pre class="code"><code class="language-python">PAR_SHARE = 0.5   # Mindestanteil der Slots in Parallelpaaren (für g &gt;= 3)
+
+def structure_rule(g):
+    # passende Regel aus preferences.json zur Gruppenzahl g finden
+    # condition ist ein String wie &quot;course_groups &gt;= 3&quot; und wird mit eval ausgewertet
+    for rule in prefs[&quot;appointment_structure_preferences&quot;]:
+        if eval(rule[&quot;condition&quot;], {&quot;course_groups&quot;: g}):
+            return rule
+
+for g in [1, 2, 3, 8]:
+    r = structure_rule(g)
+    print(f&quot;{g} Gruppen -&gt; parallel: {r[&#x27;parallel&#x27;]}  aufeinanderfolgend: {r[&#x27;sequential&#x27;]}&quot;)</code></pre></div>
+      <div class="explain">
+        <p><code>structure_rule(g)</code> sucht die passende Regel aus <code>preferences.json</code>. Die Bedingung steht dort als Text, z. B. <code>"course_groups >= 3"</code>. <code>eval</code> wertet diesen Text aus, wobei <code>course_groups</code> auf <code>g</code> gesetzt wird.</p>
+        <p><code>PAR_SHARE = 0.5</code> legt fest, welcher Anteil der Slots großer Studiengänge mindestens in Parallelpaaren liegen muss.</p>
+      </div>
+    </div>
+    <div class="walk">
+      <div><span class="cellref">Zelle 22 · Teil 1: Hilfsvariablen</span><pre class="code"><code class="language-python">def add_structure_constraints(model, x, week_df, programs):
+    groups = dict(zip(week_df[&quot;study_program&quot;], week_df[&quot;course_groups&quot;] * week_df[&quot;cohorts&quot;]))
+    bounds_week = demand_bounds(week_df)
+
+    for s in programs:
+        rule = structure_rule(groups[s])
+        parallel, sequential = [], []   # Hilfsvariablen sammeln, um sie später zu zählen
+
+        for day in weekdays:
+            used = {}
+            for t in slots:
+                r1, r2 = x[f&quot;{day}_{t}_R1&quot;, s], x[f&quot;{day}_{t}_R2&quot;, s]
+
+                par = model.NewBoolVar(f&quot;par_{day}_{t}_{s}&quot;)
+                model.AddMinEquality(par, [r1, r2])          # 1, wenn s beide Räume hat
+                parallel.append(par)
+
+                used[t] = model.NewBoolVar(f&quot;used_{day}_{t}_{s}&quot;)
+                model.AddMaxEquality(used[t], [r1, r2])      # 1, wenn s mind. einen Raum hat
+
+            for t1, t2 in zip(slots, slots[1:]):             # (A,B), (B,C), (C,D)
+                seq = model.NewBoolVar(f&quot;seq_{day}_{t1}{t2}_{s}&quot;)
+                model.AddMinEquality(seq, [used[t1], used[t2]])   # 1, wenn s beide Zeitslots hat
+                sequential.append(seq)</code></pre></div>
+      <div class="explain">
+        <p>Pro Tag, Slot und Studiengang entstehen drei Hilfsvariablen:</p>
+        <ul>
+          <li><code>par = min(R1, R2)</code>: 1 nur, wenn beide Räume diesem Studiengang gehören.</li>
+          <li><code>used = max(R1, R2)</code>: 1, wenn mindestens ein Raum ihm gehört.</li>
+          <li><code>seq = min(used[t1], used[t2])</code>: 1, wenn er zwei benachbarte Zeitslots hat.</li>
+        </ul>
+        <div class="out-label">Beispiel: MB am Montag, Woche 1</div>
+        <div class="tablewrap"><table class="mat" id="structEx"></table></div>
+      </div>
+    </div>
+    <div class="walk">
+      <div><span class="cellref">Zelle 22 · Teil 2: Regeln anwenden</span><pre class="code"><code class="language-python">        # g = 1: allowed = false -&gt; verboten
+        if not rule[&quot;parallel&quot;][&quot;allowed&quot;]:
+            model.Add(sum(parallel) == 0)
+        if not rule[&quot;sequential&quot;][&quot;allowed&quot;]:
+            model.Add(sum(sequential) == 0)
+
+        # g &gt;= 3: parallel bevorzugt (6 &gt; 3)
+        if rule[&quot;parallel&quot;][&quot;preference&quot;] &gt; rule[&quot;sequential&quot;][&quot;preference&quot;]:
+            model.Add(sum(parallel) &gt;= sum(sequential))                                     # (a)
+            model.Add(sum(parallel) &gt;= math.floor(bounds_week[s][0] * PAR_SHARE / 2))       # (b)</code></pre></div>
+      <div class="explain">
+        <p>Bei <code>allowed: false</code> (INF mit 1 Kursgruppe) muss die Summe aller <code>par</code> bzw. <code>seq</code> 0 sein.</p>
+        <p>Ist parallel stärker bevorzugt (6 &gt; 3), gelten zwei Bedingungen: (a) mindestens so viele Parallelpaare wie aufeinanderfolgende Paare und (b) eine Mindestzahl an Parallelpaaren, z. B. MB in Woche 1: <code>floor(16 · 0.5 / 2) = 4</code>.</p>
+        <p>ET mit 2 Kursgruppen hat Präferenz 0 / 0 und erlaubt beides. Für ET greift keine der beiden <code>if</code>-Bedingungen.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section id="s7">
+    <div class="step-head"><div class="eyebrow">Schritt 7</div><h2>Lösen</h2></div>
+    <div class="walk">
+      <div><span class="cellref">Zelle 15 · solve</span><pre class="code"><code class="language-python">def solve(model, x):
+    solver = cp_model.CpSolver()
+    status = solver.Solve(model)
+    if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+        return None
+    return {v: s for (v, s), var in x.items() if solver.Value(var)}</code></pre></div>
+      <div class="explain">
+        <p><code>CpSolver().Solve(model)</code> sucht eine Belegung aller Booleschen Variablen, die jede Bedingung erfüllt. Da das Modell keine Zielfunktion hat, bedeutet <code>OPTIMAL</code> hier nur „zulässige Lösung gefunden“.</p>
+        <p>Am Ende wird <code>x</code> wieder in die fachliche Form übersetzt: Für jeden Slot wird der Studiengang mit Wert 1 übernommen. Ergebnis: <code>{'Mo_A_R1': 'MT', 'Mo_A_R2': 'MT', …}</code>.</p>
+        <p class="warnbox"><b>Achtung:</b> Ist ein Modell unlösbar, gibt <code>solve</code> <code>None</code> zurück. Die Schleife in Schritt 9 ruft dann <code>show_plan(None)</code> auf und bricht mit <code>AttributeError</code> ab.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section id="s8">
+    <div class="step-head"><div class="eyebrow">Schritt 8</div><h2>Ergebnis darstellen und nachzählen</h2></div>
+    <div class="walk">
+      <div><span class="cellref">Zelle 24 · Anzeige</span><pre class="code"><code class="language-python">def show_plan(solution):
+    rows = [
+        {
+            &quot;Tag&quot;: v.split(&quot;_&quot;)[0], 
+            &quot;Slot&quot;: v.split(&quot;_&quot;)[1], 
+            &quot;Raum&quot;: v.split(&quot;_&quot;)[2], 
+            &quot;SG&quot;: s # study_program
+        }
+        for v, s in solution.items()
+    ]
+    
+    #plan = pd.DataFrame(rows)
+    #print (plan)
+    #     Tag   Slot Raum  SG
+    # 0   Mo    A    R1    INF
+    # 1   Mo    A    R2    DS
+
+    plan = pd.DataFrame(rows).pivot(
+        index=[&quot;Slot&quot;, &quot;Raum&quot;], 
+        columns=&quot;Tag&quot;, 
+        values=&quot;SG&quot;
+    )
+    return plan[weekdays]
+
+def slots_per_day(solution):
+    rows = [
+        {
+            &quot;Tag&quot;: v.split(&quot;_&quot;)[0], 
+            &quot;SG&quot;: s # study_program
+        } 
+        for v, s in solution.items()
+    ]
+
+    df = pd.DataFrame(rows)
+    return pd.crosstab(
+        df[&quot;SG&quot;], 
+        df[&quot;Tag&quot;]
+    )[weekdays]</code></pre></div>
+      <div class="explain">
+        <p><code>show_plan</code> zerlegt jeden Variablennamen in Tag, Slot und Raum und baut daraus mit <code>pivot</code> eine Tabelle: Zeilen = Slot und Raum, Spalten = Tage.</p>
+        <p><code>slots_per_day</code> zählt mit <code>crosstab</code>, wie viele Slots jeder Studiengang an jedem Tag hat. Damit lässt sich die Tagesgrenze aus Schritt 4 direkt prüfen.</p>
+      </div>
+    </div>
+    <details class="more">
+      <summary>Zelle 23 · pop_and_struc() anzeigen</summary>
+      <pre class="code"><code class="language-python">def pop_and_struc(solution):
+    rows = []
+
+    # Jeden Studiengang einzeln betrachten
+    for s in sorted(set(solution.values())):
+
+        # Alle Slots dieses Studiengangs sammeln
+        own = []
+        for v, sg in solution.items():
+            if sg == s:
+                own.append(v)
+
+        # Die belegten Tage und Zeitslots speichern
+        times = set()
+        for v in own:
+            teile = v.split(&quot;_&quot;)
+            tag = teile[0]
+            slot = teile[1]
+            times.add((tag, slot))
+
+        # Gleichzeitige Prüfungen in beiden Räumen zählen
+        parallel = 0
+        for d in weekdays:
+            for t in slots:
+                if (solution[f&quot;{d}_{t}_R1&quot;] == s and
+                    solution[f&quot;{d}_{t}_R2&quot;] == s):
+                    parallel += 1
+
+        # Direkt aufeinanderfolgende Prüfungen zählen
+        sequential = 0
+        for d in weekdays:
+            for i in range(len(slots) - 1):
+                t1 = slots[i]
+                t2 = slots[i + 1]
+
+                if (d, t1) in times and (d, t2) in times:
+                    sequential += 1
+
+        # Durchschnittliche Popularität berechnen
+        durchschnitt = sum(pop[v] for v in own) / len(own)
+
+        # Ergebnisse speichern
+        rows.append({
+            &quot;SG&quot;: s,
+            &quot;Slots&quot;: len(own),
+            &quot;mittl. Popularität&quot;: round(durchschnitt, 2),
+            &quot;parallel&quot;: parallel,
+            &quot;aufeinanderfolgend&quot;: sequential
+        })
+
+    # Ergebnisse als Tabelle zurückgeben
+    return pd.DataFrame(rows).set_index(&quot;SG&quot;)</code></pre>
+    </details>
+    <p><code>pop_and_struc</code> zählt am fertigen Plan nach, was der Solver einhalten sollte: Slots, mittlere Popularität, Parallelpaare und aufeinanderfolgende Paare. Die Funktion rechnet unabhängig vom Modell und eignet sich deshalb als Grundlage für die Validierung aus 4.6.</p>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+      <div class="tabs" role="tablist" id="tabs"></div>
+    </div>
+    <div class="legend" id="legend"></div>
+    <div class="grid-scroll"><div id="plan"></div></div>
+    <div class="tablewrap"><table id="stats"></table></div>
+  </section>
+
+  <!-- 9 -->
+  <section id="s9">
+    <div class="step-head"><div class="eyebrow">Schritt 9</div><h2>Die Hauptschleife</h2></div>
+    <div class="walk">
+      <div><span class="cellref">Zelle 24 · Schleife</span><pre class="code"><code class="language-python">solutions = {}
+for week in weeks:
+    print(&quot;========================================================&quot;)
+    print(f&quot;Week: {week}&quot;)
+    print(&quot;========================================================&quot;)
+
+    solutions[week] = solve(*build_csp(week))
+    # e.g. {&#x27;Mo_A_R1&#x27;: &#x27;INF&#x27;, &#x27;Mo_A_R2&#x27;: &#x27;DS&#x27;, &#x27;Mo_B_R1&#x27;: &#x27;MB&#x27;, ........ }
+
+    print(&quot;Week plan:&quot;)
+    display(show_plan(solutions[week]))
+    print(&quot;&quot;)
+
+    print(&quot;Week demand:&quot;)
+    print(week, pd.Series(solutions[week]).value_counts().to_dict()) # print how often each course de-facto occurs in this week (cmp. demand_bounds())
+    print(&quot;&quot;)
+
+    print(&quot;Day demand:&quot;)
+    display(slots_per_day(solutions[week]))
+    print(&quot;&quot;)
+
+    print(&quot;Popularität und Struktur:&quot;)
+    display(pop_and_struc(solutions[week]))</code></pre></div>
+      <div class="explain">
+        <p>Für jede Woche wird ein neues Modell gebaut und gelöst. <code>solve(*build_csp(week))</code> entpackt dabei das Tupel <code>(model, x)</code> direkt in die beiden Parameter von <code>solve</code>.</p>
+        <p>Danach gibt die Schleife vier Dinge aus: Plan, Slots pro Woche, Slots pro Tag und die Kennzahlen aus <code>pop_and_struc</code>.</p>
+        <p>Die drei Wochen sind voneinander unabhängig. Jede hat ihr eigenes Modell mit eigenen Studiengängen.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Beim Lesen aufgefallen</div>
+    <h2>Hinweise zum Code</h2>
+    <ul>
+      <li><b>Fehlende Regel C9:</b> „Slot D am Tag d, dann nicht Slot A am Tag d+1“ ist noch nicht umgesetzt. Die <code>used</code>-Variablen aus Schritt 6 gibt es schon, aber nur innerhalb eines Tages. Für C9 müssen sie über Tagesgrenzen hinweg erreichbar sein.</li>
+      <li><b>Unlösbare Wochen:</b> Die Schleife sollte <code>None</code> abfangen, bevor sie <code>show_plan</code> aufruft.</li>
+      <li><b>Globales <code>week_df</code>:</b> Zelle 13 legt ein globales <code>week_df</code> für Woche 1 an. Die Funktionen nutzen ihren eigenen Parameter gleichen Namens, es gibt also keinen Fehler. Für die Lesbarkeit ist ein anderer Name in Zelle 13 trotzdem besser.</li>
+      <li><b><code>eval</code> auf JSON-Text:</b> Bei einer eigenen, vertrauenswürdigen Datei ist das unproblematisch. Es lohnt sich aber, das im Notebook kurz zu begründen.</li>
+      <li><b>Doppelte Berechnung:</b> <code>groups</code> wird in <code>demand_bounds</code> und in <code>add_structure_constraints</code> gleich berechnet. Eine kleine Hilfsfunktion würde das zusammenfassen.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+const DATA = {"weeks":{"Woche 1":{"groups":{"ES":3,"INF":1,"MB":8,"MT":4,"DS":4},"bounds":{"ES":[6,6],"INF":[2,2],"MB":[16,16],"MT":[8,8],"DS":[8,8]},"day":{"ES":[1,2],"INF":[0,1],"MB":[3,4],"MT":[1,2],"DS":[1,2]},"sol":{"Mo_A_R1":"MT","Mo_A_R2":"MT","Mo_B_R1":"MB","Mo_B_R2":"MB","Mo_C_R1":"MB","Mo_C_R2":"ES","Mo_D_R1":"INF","Mo_D_R2":"DS","Di_A_R1":"MB","Di_A_R2":"DS","Di_B_R1":"MB","Di_B_R2":"MT","Di_C_R1":"ES","Di_C_R2":"ES","Di_D_R1":"MB","Di_D_R2":"MB","Mi_A_R1":"DS","Mi_A_R2":"DS","Mi_B_R1":"MB","Mi_B_R2":"ES","Mi_C_R1":"MT","Mi_C_R2":"INF","Mi_D_R1":"MB","Mi_D_R2":"MB","Do_A_R1":"DS","Do_A_R2":"DS","Do_B_R1":"MT","Do_B_R2":"MT","Do_C_R1":"MB","Do_C_R2":"MB","Do_D_R1":"ES","Do_D_R2":"MB","Fr_A_R1":"MB","Fr_A_R2":"MB","Fr_B_R1":"ES","Fr_B_R2":"DS","Fr_C_R1":"MT","Fr_C_R2":"DS","Fr_D_R1":"MB","Fr_D_R2":"MT"},"stats":[{"SG":"DS","Slots":8,"mittl. Popularität":6.75,"parallel":2,"aufeinanderfolgend":1},{"SG":"ES","Slots":6,"mittl. Popularität":6.5,"parallel":1,"aufeinanderfolgend":0},{"SG":"INF","Slots":2,"mittl. Popularität":6.5,"parallel":0,"aufeinanderfolgend":0},{"SG":"MB","Slots":16,"mittl. Popularität":6.56,"parallel":5,"aufeinanderfolgend":3},{"SG":"MT","Slots":8,"mittl. Popularität":6.88,"parallel":2,"aufeinanderfolgend":1}]},"Woche 2":{"groups":{"ET":2,"MB":8,"MT":4,"DS":4},"bounds":{"ET":[4,5],"MB":[17,18],"MT":[8,9],"DS":[8,9]},"day":{"ET":[0,1],"MB":[3,4],"MT":[1,2],"DS":[1,2]},"sol":{"Mo_A_R1":"MB","Mo_A_R2":"MB","Mo_B_R1":"MB","Mo_B_R2":"MT","Mo_C_R1":"ET","Mo_C_R2":"MB","Mo_D_R1":"DS","Mo_D_R2":"DS","Di_A_R1":"MT","Di_A_R2":"DS","Di_B_R1":"MB","Di_B_R2":"DS","Di_C_R1":"MB","Di_C_R2":"MB","Di_D_R1":"ET","Di_D_R2":"MT","Mi_A_R1":"MB","Mi_A_R2":"DS","Mi_B_R1":"MT","Mi_B_R2":"MB","Mi_C_R1":"MB","Mi_C_R2":"MB","Mi_D_R1":"ET","Mi_D_R2":"MT","Do_A_R1":"MB","Do_A_R2":"MB","Do_B_R1":"DS","Do_B_R2":"ET","Do_C_R1":"DS","Do_C_R2":"MB","Do_D_R1":"MT","Do_D_R2":"MT","Fr_A_R1":"MT","Fr_A_R2":"MT","Fr_B_R1":"MB","Fr_B_R2":"MB","Fr_C_R1":"MB","Fr_C_R2":"MB","Fr_D_R1":"DS","Fr_D_R2":"DS"},"stats":[{"SG":"DS","Slots":9,"mittl. Popularität":6.44,"parallel":2,"aufeinanderfolgend":2},{"SG":"ET","Slots":4,"mittl. Popularität":6.75,"parallel":0,"aufeinanderfolgend":0},{"SG":"MB","Slots":18,"mittl. Popularität":6.78,"parallel":6,"aufeinanderfolgend":6},{"SG":"MT","Slots":9,"mittl. Popularität":6.56,"parallel":2,"aufeinanderfolgend":0}]},"Woche 3":{"groups":{"WIW":5,"ET":2,"MB":8,"DS":4},"bounds":{"WIW":[10,11],"ET":[4,5],"MB":[16,17],"DS":[8,9]},"day":{"WIW":[2,3],"ET":[0,1],"MB":[3,4],"DS":[1,2]},"sol":{"Mo_A_R1":"MB","Mo_A_R2":"MB","Mo_B_R1":"WIW","Mo_B_R2":"WIW","Mo_C_R1":"ET","Mo_C_R2":"MB","Mo_D_R1":"DS","Mo_D_R2":"DS","Di_A_R1":"MB","Di_A_R2":"MB","Di_B_R1":"DS","Di_B_R2":"WIW","Di_C_R1":"MB","Di_C_R2":"MB","Di_D_R1":"WIW","Di_D_R2":"WIW","Mi_A_R1":"WIW","Mi_A_R2":"MB","Mi_B_R1":"DS","Mi_B_R2":"MB","Mi_C_R1":"ET","Mi_C_R2":"DS","Mi_D_R1":"WIW","Mi_D_R2":"MB","Do_A_R1":"WIW","Do_A_R2":"ET","Do_B_R1":"MB","Do_B_R2":"DS","Do_C_R1":"WIW","Do_C_R2":"DS","Do_D_R1":"MB","Do_D_R2":"MB","Fr_A_R1":"WIW","Fr_A_R2":"MB","Fr_B_R1":"ET","Fr_B_R2":"MB","Fr_C_R1":"DS","Fr_C_R2":"DS","Fr_D_R1":"MB","Fr_D_R2":"WIW"},"stats":[{"SG":"DS","Slots":9,"mittl. Popularität":6.33,"parallel":2,"aufeinanderfolgend":2},{"SG":"ET","Slots":4,"mittl. Popularität":6.5,"parallel":0,"aufeinanderfolgend":0},{"SG":"MB","Slots":16,"mittl. Popularität":6.75,"parallel":4,"aufeinanderfolgend":2},{"SG":"WIW","Slots":11,"mittl. Popularität":6.82,"parallel":2,"aufeinanderfolgend":0}]}},"pop":{"Mo_A_R1":9,"Mo_B_R1":10,"Mo_C_R1":7,"Mo_D_R1":7,"Di_A_R1":8,"Di_B_R1":9,"Di_C_R1":6,"Di_D_R1":6,"Mi_A_R1":8,"Mi_B_R1":9,"Mi_C_R1":6,"Mi_D_R1":6,"Do_A_R1":7,"Do_B_R1":8,"Do_C_R1":5,"Do_D_R1":5,"Fr_A_R1":5,"Fr_B_R1":6,"Fr_C_R1":3,"Fr_D_R1":3}};
+const DAYS = ["Mo", "Di", "Mi", "Do", "Fr"];
+const DAY_NAMES = { Mo: "Montag", Di: "Dienstag", Mi: "Mittwoch", Do: "Donnerstag", Fr: "Freitag" };
+const SLOTS = ["A", "B", "C", "D"];
+const TIMES = { A: "08:00–10:00", B: "10:30–12:30", C: "13:00–15:00", D: "15:30–17:30" };
+
+function chip(s) {
+  return `<span class="chip" style="background:var(--c-${s});color:var(--t-${s})">${s}</span>`;
+}
+
+// Übergänge "letzter Slot (D) an Tag d → erster Slot (A) an Tag d+1" desselben Studiengangs
+function findDA(sol) {
+  const hits = [];
+  for (let i = 0; i < DAYS.length - 1; i++) {
+    const d = DAYS[i], n = DAYS[i + 1];
+    const late = new Set([sol[`${d}_D_R1`], sol[`${d}_D_R2`]]);
+    const early = new Set([sol[`${n}_A_R1`], sol[`${n}_A_R2`]]);
+    late.forEach(s => { if (early.has(s)) hits.push({ s, from: d, to: n }); });
+  }
+  return hits;
+}
+
+function flaggedSlots(sol) {
+  const flagged = new Set();
+  findDA(sol).forEach(h => {
+    ["R1", "R2"].forEach(r => {
+      if (sol[`${h.from}_D_${r}`] === h.s) flagged.add(`${h.from}_D_${r}`);
+      if (sol[`${h.to}_A_${r}`] === h.s) flagged.add(`${h.to}_A_${r}`);
+    });
+  });
+  return flagged;
+}
+
+function cellHTML(sol, d, t, flagged) {
+  const a = sol[`${d}_${t}_R1`], b = sol[`${d}_${t}_R2`];
+  const f1 = flagged.has(`${d}_${t}_R1`), f2 = flagged.has(`${d}_${t}_R2`);
+  if (a === b) {
+    return `<div class="tile wide${f1 || f2 ? " flag" : ""}" style="background:var(--c-${a});color:var(--t-${a})" title="${a}: ${DAY_NAMES[d]} ${t}, beide Räume">${a}<small>R1 + R2 parallel</small></div>`;
+  }
+  return `<div class="tile${f1 ? " flag" : ""}" style="background:var(--c-${a});color:var(--t-${a})" title="${a}: ${DAY_NAMES[d]} ${t}, Raum 1">${a}<small>R1</small></div>` +
+         `<div class="tile${f2 ? " flag" : ""}" style="background:var(--c-${b});color:var(--t-${b})" title="${b}: ${DAY_NAMES[d]} ${t}, Raum 2">${b}<small>R2</small></div>`;
+}
+
+// Schmale Bildschirme: ein Block pro Tag statt einer breiten Tabelle
+function renderPlanByDay(el, week, opts = {}) {
+  const sol = DATA.weeks[week].sol;
+  const flagged = opts.flagDA ? flaggedSlots(sol) : new Set();
+  el.innerHTML = `<div class="dayplan" aria-label="Belegungsplan ${week}">` + DAYS.map(d =>
+    `<div class="daycard"><h4>${DAY_NAMES[d]}</h4>` + SLOTS.map(t =>
+      `<div class="drow"><span class="sl"><b>${t}</b>${TIMES[t].split("–")[0]}</span><div class="cell">${cellHTML(sol, d, t, flagged)}</div></div>`
+    ).join("") + `</div>`
+  ).join("") + `</div>`;
+}
+
+function renderPlan(el, week, opts = {}) {
+  const sol = DATA.weeks[week].sol;
+  const flagged = new Set();
+  if (opts.flagDA) {
+    findDA(sol).forEach(h => {
+      ["R1", "R2"].forEach(r => {
+        if (sol[`${h.from}_D_${r}`] === h.s) flagged.add(`${h.from}_D_${r}`);
+        if (sol[`${h.to}_A_${r}`] === h.s) flagged.add(`${h.to}_A_${r}`);
+      });
+    });
+  }
+  let html = `<div class="plan" role="table" aria-label="Belegungsplan ${week}"><div></div>`;
+  DAYS.forEach(d => { html += `<div class="hd" role="columnheader">${opts.longDays ? DAY_NAMES[d] : d}</div>`; });
+  SLOTS.forEach(t => {
+    html += `<div class="slotlbl" role="rowheader"><b>${t}</b>${TIMES[t].replace("–", "–<br>")}</div>`;
+    DAYS.forEach(d => {
+      const a = sol[`${d}_${t}_R1`], b = sol[`${d}_${t}_R2`];
+      const f1 = flagged.has(`${d}_${t}_R1`), f2 = flagged.has(`${d}_${t}_R2`);
+      html += `<div class="cell" role="cell">`;
+      if (a === b) {
+        html += `<div class="tile wide${f1 || f2 ? " flag" : ""}" style="background:var(--c-${a});color:var(--t-${a})" title="${a}: ${DAY_NAMES[d]} ${t}, beide Räume">${a}<small>R1 + R2 parallel</small></div>`;
+      } else {
+        html += `<div class="tile${f1 ? " flag" : ""}" style="background:var(--c-${a});color:var(--t-${a})" title="${a}: ${DAY_NAMES[d]} ${t}, Raum 1">${a}<small>R1</small></div>`;
+        html += `<div class="tile${f2 ? " flag" : ""}" style="background:var(--c-${b});color:var(--t-${b})" title="${b}: ${DAY_NAMES[d]} ${t}, Raum 2">${b}<small>R2</small></div>`;
+      }
+      html += `</div>`;
+    });
+  });
+  el.innerHTML = html + `</div>`;
+}
+
+function renderLegend(el, week) {
+  const g = DATA.weeks[week].groups;
+  el.innerHTML = Object.keys(g).map(s =>
+    `<span><i class="sw" style="background:var(--c-${s})"></i>${s} · ${g[s]} ${g[s] === 1 ? "Kursgruppe" : "Kursgruppen"}</span>`
+  ).join("");
+}
+
+function setupTabs(tabsEl, onChange) {
+  const weeks = Object.keys(DATA.weeks);
+  tabsEl.innerHTML = weeks.map((w, i) =>
+    `<button type="button" role="tab" aria-selected="${i === 0}" data-week="${w}">${w}</button>`).join("");
+  tabsEl.addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    tabsEl.querySelectorAll("button").forEach(x => x.setAttribute("aria-selected", x === b));
+    onChange(b.dataset.week);
+  });
+  onChange(weeks[0]);
+}
+
+if (window.hljs) document.querySelectorAll("pre.code code").forEach(el => hljs.highlightElement(el));
+
+const W1 = DATA.weeks["Woche 1"];
+const tot = Object.values(W1.groups).reduce((a, b) => a + b, 0);
+const fmt = v => (Math.round(v * 100) / 100).toString().replace(".", ",");
+
+// Schritt 3: Rechenbeispiel
+document.getElementById("boundsEx").innerHTML =
+  `<thead><tr><th>s</th><th>g</th><th>g·40/20</th><th>Woche</th><th>g·8/20</th><th>Tag</th></tr></thead><tbody>` +
+  Object.entries(W1.groups).map(([s, g]) => {
+    const [lo, hi] = W1.bounds[s], [dlo, dhi] = W1.day[s];
+    return `<tr><td>${chip(s)}</td><td>${g}</td><td>${fmt(g * 40 / tot)}</td><td>(${lo}, ${hi})</td><td>${fmt(g * 8 / tot)}</td><td>(${dlo}, ${dhi})</td></tr>`;
+  }).join("") + `</tbody>`;
+
+// Schritt 4: Ausschnitt der x-Matrix
+const progs = Object.keys(W1.groups);
+const rowsX = ["Mo_A_R1", "Mo_A_R2", "Mo_B_R1", "Mo_B_R2", "Mo_C_R1"];
+document.getElementById("xMat").innerHTML =
+  `<thead><tr><th>v</th>${progs.map(s => `<th>${s}</th>`).join("")}<th>Σ</th></tr></thead><tbody>` +
+  rowsX.map(v => `<tr><td>${v}</td>${progs.map(s => W1.sol[v] === s
+    ? `<td class="one" style="background:var(--c-${s});color:var(--t-${s})">1</td>` : `<td class="muted">0</td>`).join("")}<td class="sum">= 1</td></tr>`).join("") +
+  `</tbody>`;
+
+// Schritt 5: Faktoren und INF-Beispiel
+let coef = `<div></div>` + DAYS.map(d => `<div class="h">${d}</div>`).join("");
+SLOTS.forEach(t => {
+  coef += `<div class="r">${t}</div>`;
+  DAYS.forEach(d => {
+    const c = 40 * DATA.pop[`${d}_${t}_R1`] - 266;
+    const col = c >= 0 ? "var(--ok)" : "var(--warn)";
+    const pct = Math.round(Math.abs(c) / 146 * 45) + 6;
+    coef += `<div class="v" style="background:color-mix(in srgb, ${col} ${pct}%, var(--surface))">${c > 0 ? "+" : ""}${c}</div>`;
+  });
+});
+document.getElementById("coef").innerHTML = coef;
+
+const popOf = v => DATA.pop[v.replace("_R2", "_R1")];
+const infSlots = Object.keys(W1.sol).filter(v => W1.sol[v] === "INF");
+const infDev = infSlots.map(v => 40 * popOf(v) - 266);
+const sumDev = infDev.reduce((a, b) => a + b, 0), n = infSlots.length;
+document.getElementById("infCalc").innerHTML =
+  infSlots.map((v, i) => `<span>${v}: p = ${popOf(v)} → 40·${popOf(v)} − 266 = ${infDev[i] > 0 ? "+" : ""}${infDev[i]}</span>`).join("") +
+  `<span>Summe = ${sumDev}, erlaubt: −${20 * n} … +${20 * n} <span class="ok">✓ erfüllt</span></span>` +
+  `<span class="muted">Ø p = ${fmt(infSlots.reduce((a, v) => a + popOf(v), 0) / n)} liegt im Band 6,15 – 7,15</span>`;
+
+// Schritt 6: Hilfsvariablen für MB am Montag
+const s0 = "MB", d0 = "Mo";
+const used = {}, par = {};
+SLOTS.forEach(t => {
+  const a = W1.sol[`${d0}_${t}_R1`] === s0 ? 1 : 0, b = W1.sol[`${d0}_${t}_R2`] === s0 ? 1 : 0;
+  par[t] = Math.min(a, b); used[t] = Math.max(a, b); par[t + "r"] = [a, b];
+});
+const pairs = [["A", "B"], ["B", "C"], ["C", "D"]];
+document.getElementById("structEx").innerHTML =
+  `<thead><tr><th>Slot</th><th>R1</th><th>R2</th><th>par</th><th>used</th></tr></thead><tbody>` +
+  SLOTS.map(t => `<tr><td>${t}</td><td>${par[t + "r"][0]}</td><td>${par[t + "r"][1]}</td><td${par[t] ? ' class="one"' : ""}>${par[t]}</td><td${used[t] ? ' class="one"' : ""}>${used[t]}</td></tr>`).join("") +
+  `<tr><td colspan="5" style="text-align:left">seq: ${pairs.map(([a, b]) => `${a}${b} = ${Math.min(used[a], used[b])}`).join(" · ")}</td></tr></tbody>`;
+
+// Schritt 8: Plan und Kennzahlen
+const narrow = window.matchMedia("(max-width: 680px)");
+let current;
+function show(week) {
+  current = week;
+  (narrow.matches ? renderPlanByDay : renderPlan)(document.getElementById("plan"), week, {});
+  renderLegend(document.getElementById("legend"), week);
+  const d = DATA.weeks[week];
+  document.getElementById("stats").innerHTML =
+    `<thead><tr><th>SG</th><th>Slots</th><th>Ø Pop.</th><th>parallel</th><th>aufeinanderf.</th></tr></thead><tbody>` +
+    d.stats.map(r => `<tr><td>${chip(r.SG)}</td><td>${r.Slots}</td><td>${r["mittl. Popularität"].toFixed(2).replace(".", ",")}</td><td>${r.parallel}</td><td>${r.aufeinanderfolgend}</td></tr>`).join("") + `</tbody>`;
+}
+narrow.addEventListener("change", () => show(current));
+setupTabs(document.getElementById("tabs"), show);
+</script>

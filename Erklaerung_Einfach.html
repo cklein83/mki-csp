@@ -1,0 +1,380 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prüfungsraum-CSP einfach erklärt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Layout: Stundenplan-Raster – linksbündige Spalte, Prüfungsraster als zentrales Bild */
+:root {
+  --bg: #f5f7f9;
+  --surface: #ffffff;
+  --fg: #16202b;
+  --muted: #586776;
+  --line: #d6dde4;
+  --accent: #c2562b;
+  --accent-soft: #f6e3d9;
+  --ok: #247a5c;
+  --warn: #b2401f;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --font-body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --font-math: "STIX Two Text", "Cambria Math", "Times New Roman", serif;
+  --c-MB: #2f6fb3; --t-MB: #ffffff;
+  --c-DS: #b8502a; --t-DS: #ffffff;
+  --c-MT: #247a5c; --t-MT: #ffffff;
+  --c-ES: #7d55b8; --t-ES: #ffffff;
+  --c-INF: #e0ad2c; --t-INF: #1d1808;
+  --c-ET: #b83a72; --t-ET: #ffffff;
+  --c-WIW: #3f7280; --t-WIW: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161c; --surface: #19212a; --fg: #e4e9ee; --muted: #9aa8b5; --line: #2c3743;
+    --accent: #e8814f; --accent-soft: #3a2519; --ok: #5cc49c; --warn: #f08a63;
+    --c-MB: #3d7cc2; --c-DS: #c25e36; --c-MT: #2e8a69; --c-ES: #8a63c7; --c-INF: #e0ad2c; --c-ET: #c44a80; --c-WIW: #4d8291;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161c; --surface: #19212a; --fg: #e4e9ee; --muted: #9aa8b5; --line: #2c3743;
+  --accent: #e8814f; --accent-soft: #3a2519; --ok: #5cc49c; --warn: #f08a63;
+  --c-MB: #3d7cc2; --c-DS: #c25e36; --c-MT: #2e8a69; --c-ES: #8a63c7; --c-INF: #e0ad2c; --c-ET: #c44a80; --c-WIW: #4d8291;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.6; }
+.wrap { max-width: 980px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 80px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 56px; }
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.15; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 3.1rem); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 1.65rem; font-weight: 650; }
+h3 { font-size: 1.15rem; font-weight: 650; }
+p { margin: 0; max-width: 68ch; }
+section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; min-width: 0; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lede { font-size: 1.15rem; color: var(--muted); max-width: 62ch; }
+.muted { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 0.88em; }
+code { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+.math { font-family: var(--font-math); font-size: 1.12em; }
+.math i { font-style: italic; }
+.formula { font-family: var(--font-math); font-size: 1.25rem; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; overflow-x: auto; white-space: nowrap; }
+.frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 3px; }
+.frac > span:first-child { border-bottom: 1px solid currentColor; padding: 0 4px; }
+.frac > span:last-child { padding: 0 4px; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: 0.93rem; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.chip { display: inline-block; min-width: 2.6em; text-align: center; font-family: var(--font-mono); font-size: 0.8rem; font-weight: 600; padding: 1px 7px; border-radius: 4px; }
+.pill { display: inline-block; font-family: var(--font-mono); font-size: 0.72rem; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.pill.ok { color: var(--ok); }
+.pill.open { color: var(--warn); }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.cols > * { min-width: 0; }
+.note { border-left: 3px solid var(--accent); padding: 4px 0 4px 16px; max-width: 68ch; }
+ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 68ch; }
+
+/* Wochenraster */
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.tabs button { font: inherit; font-family: var(--font-mono); font-size: 0.85rem; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.tabs button:focus-visible, .toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.grid-scroll { overflow-x: auto; }
+.plan { display: grid; grid-template-columns: 74px repeat(5, minmax(96px, 1fr)); gap: 6px; min-width: 600px; }
+.plan .hd { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); text-align: center; padding-bottom: 2px; }
+.plan .slotlbl { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); display: flex; flex-direction: column; justify-content: center; line-height: 1.25; }
+.plan .slotlbl b { font-size: 1rem; color: var(--fg); }
+.cell { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; min-height: 52px; }
+.tile { border-radius: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: var(--font-mono); font-weight: 600; font-size: 0.86rem; line-height: 1.1; position: relative; }
+.tile small { font-weight: 400; font-size: 0.64rem; opacity: 0.85; }
+.tile.wide { grid-column: span 2; }
+.tile.flag { outline: 2.5px dashed var(--warn); outline-offset: 2px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 0.88rem; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+.toggle { font: inherit; font-size: 0.85rem; display: inline-flex; gap: 8px; align-items: center; cursor: pointer; }
+
+.dayplan { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 12px; }
+.daycard { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px; display: grid; gap: 5px; min-width: 0; }
+.daycard h4 { margin: 0 0 2px; font-family: var(--font-display); font-size: 1rem; font-weight: 650; }
+.drow { display: grid; grid-template-columns: 40px 1fr; gap: 6px; align-items: stretch; }
+.drow .sl { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); display: flex; flex-direction: column; justify-content: center; line-height: 1.2; }
+.drow .sl b { font-size: 0.92rem; color: var(--fg); }
+.drow .cell { min-height: 42px; }
+.drow .tile { font-size: 0.8rem; }
+
+@media (max-width: 520px) {
+  .wrap { padding-inline: 16px; gap: 44px; }
+  .formula { font-size: 1.05rem; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .tile { transition: transform .15s ease; }
+}
+
+.boxes { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; max-width: 640px; }
+.boxday { display: grid; gap: 6px; }
+.boxday b { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); font-weight: 500; text-align: center; }
+.boxday .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+.boxday .pair span { height: 22px; border-radius: 3px; border: 1.5px dashed var(--line); background: var(--surface); }
+.bar { display: grid; grid-template-columns: repeat(40, minmax(0, 1fr)); gap: 2px; max-width: 760px; }
+.bar span { aspect-ratio: 1 / 1.6; border-radius: 2px; max-width: 100%; }
+.share { display: grid; gap: 6px; }
+.share-row { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 0.93rem; }
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; }
+.rule { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.rule svg { width: 44px; height: 44px; color: var(--accent); }
+.rule h3 { font-size: 1.05rem; }
+.rule p { font-size: 0.95rem; color: var(--muted); }
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.step { display: grid; gap: 6px; align-content: start; }
+.step .n { font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent); }
+.fair { display: grid; gap: 10px; max-width: 640px; }
+.fair-row { display: grid; grid-template-columns: 54px 1fr 44px; gap: 10px; align-items: center; font-variant-numeric: tabular-nums; }
+.fair-track { position: relative; height: 26px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+.fair-zone { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--ok) 18%, transparent); }
+.fair-mid { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--muted); }
+.fair-dot { position: absolute; top: 5px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; border: 2px solid var(--surface); }
+.scale { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--muted); margin-left: 64px; margin-right: 54px; }
+</style>
+
+<main class="wrap">
+  <header style="display:grid;gap:14px">
+    <div class="eyebrow">Gruppe C · Christopher Klein &amp; Colin Vavra</div>
+    <h1>Wer prüft wann in welchem Raum?</h1>
+    <p class="lede">Eine Hochschule hat zwei große Prüfungsräume. Mehrere Studiengänge wollen sie in derselben Woche nutzen. Unser Programm verteilt die Termine so, dass alle Regeln eingehalten werden.</p>
+  </header>
+
+  <section>
+    <div class="eyebrow">Das Problem</div>
+    <h2>40 leere Kästchen pro Woche</h2>
+    <p>Jeder Tag hat vier Prüfungszeiten (A = 8 Uhr, B = 10:30, C = 13 Uhr, D = 15:30) und jeweils zwei Räume. Das ergibt 8 Kästchen pro Tag und 40 pro Woche. In jedes Kästchen kommt genau ein Studiengang.</p>
+    <div class="boxes" id="boxes" aria-label="40 leere Raum-Zeit-Slots"></div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Wer bekommt wie viel?</div>
+    <h2>Größere Studiengänge bekommen mehr Kästchen</h2>
+    <p>Die Größe eines Studiengangs wird in Kursgruppen gemessen. Die 40 Kästchen werden im Verhältnis der Kursgruppen aufgeteilt, ähnlich wie eine Pizza nach der Zahl der Personen am Tisch. Da es keine halben Kästchen gibt, wird auf- oder abgerundet.</p>
+    <div class="tabs" role="tablist" id="shareTabs"></div>
+    <div class="share">
+      <div class="bar" id="shareBar" aria-label="Aufteilung der 40 Slots"></div>
+      <div class="share-row" id="shareText"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Die Spielregeln</div>
+    <h2>Sieben Regeln, die jeder Plan erfüllen muss</h2>
+    <div class="rules">
+      <div class="rule">
+        <svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="6" y="8" width="32" height="28" rx="3"/><circle cx="22" cy="22" r="5" fill="currentColor"/></svg>
+        <h3>Ein Raum, ein Studiengang</h3>
+        <p>Zur selben Zeit kann in einem Raum nur ein Studiengang prüfen.</p>
+      </div>
+      <div class="rule">
+        <svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="6" y="9" width="32" height="28" rx="3"/><path d="M6 17h32M14 5v8M30 5v8"/><path d="M15 27l5 4 9-9"/></svg>
+        <h3>Nur wer diese Woche prüft</h3>
+        <p>Studiengänge ohne Prüfungen in dieser Woche bekommen keine Termine.</p>
+      </div>
+      <div class="rule">
+        <svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="22" cy="22" r="15"/><path d="M22 22V7M22 22l12 9"/><path d="M22 22 L22 7 A15 15 0 0 1 34 31 Z" fill="currentColor" opacity=".35"/></svg>
+        <h3>Anteil nach Größe</h3>
+        <p>Jeder bekommt so viele Kästchen, wie es seinem Anteil an allen Kursgruppen entspricht.</p>
+      </div>
+      <div class="rule">
+        <svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 36h32"/><rect x="8" y="22" width="5" height="14"/><rect x="16" y="20" width="5" height="16"/><rect x="24" y="22" width="5" height="14"/><rect x="32" y="21" width="5" height="15"/></svg>
+        <h3>Über die Woche verteilt</h3>
+        <p>Niemand bekommt alle Termine an einem Tag. Jeder Tag bekommt ungefähr ein Fünftel des Anteils.</p>
+      </div>
+      <div class="rule">
+        <svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 6v32M10 12h24"/><path d="M10 12l-5 11h10zM34 12l-5 11h10z"/><path d="M15 38h14"/></svg>
+        <h3>Gute Zeiten gerecht verteilt</h3>
+        <p>Montagvormittag ist beliebt, Freitagnachmittag nicht. Im Schnitt soll niemand deutlich bessere oder schlechtere Termine bekommen als die anderen.</p>
+      </div>
+      <div class="rule">
+        <svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="12" width="15" height="20" rx="2" fill="currentColor" opacity=".35"/><rect x="24" y="12" width="15" height="20" rx="2" fill="currentColor" opacity=".35"/><path d="M5 12h15v20H5zM24 12h15v20H24z"/></svg>
+        <h3>Große Studiengänge: beide Räume gleichzeitig</h3>
+        <p>Wer mindestens 3 Kursgruppen hat, soll öfter beide Räume zur selben Zeit bekommen. So können mehrere Gruppen gleichzeitig schreiben.</p>
+      </div>
+      <div class="rule">
+        <svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="22" cy="22" r="15"/><path d="M11 33L33 11"/></svg>
+        <h3>Kleine Studiengänge: nichts doppelt</h3>
+        <p>Ein Studiengang mit nur einer Kursgruppe (INF) bekommt nie beide Räume gleichzeitig und nie zwei Termine direkt hintereinander.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">So arbeitet der Computer</div>
+    <h2>Wie ein Sudoku, nur mit Prüfungsräumen</h2>
+    <p>Die Aufgabe heißt Constraint Satisfaction Problem (CSP), auf Deutsch etwa „Problem mit Bedingungen, die erfüllt werden müssen“. Es geht nicht um den besten Plan. Gesucht ist irgendein Plan, der alle Regeln einhält.</p>
+    <div class="steps">
+      <div class="step"><span class="n">Schritt 1</span><h3>Kästchen festlegen</h3><p class="muted">Für jedes der 40 Kästchen gibt es eine offene Frage: Wer kommt hier rein?</p></div>
+      <div class="step"><span class="n">Schritt 2</span><h3>Mögliche Antworten</h3><p class="muted">Als Antwort kommen nur die Studiengänge dieser Woche infrage.</p></div>
+      <div class="step"><span class="n">Schritt 3</span><h3>Regeln eintragen</h3><p class="muted">Die sieben Regeln werden als Bedingungen formuliert, die der Computer prüfen kann.</p></div>
+      <div class="step"><span class="n">Schritt 4</span><h3>Lösen lassen</h3><p class="muted">Ein Löser (Google OR-Tools) probiert geschickt Kombinationen aus, bis alle Regeln erfüllt sind.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Das Ergebnis</div>
+    <h2>Der fertige Wochenplan</h2>
+    <p>Jede Farbe ist ein Studiengang. Ein breites Kästchen heißt: Dieser Studiengang hat zur selben Zeit beide Räume.</p>
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="legend" id="legend"></div>
+    <div class="grid-scroll"><div id="plan"></div></div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Ist es gerecht?</div>
+    <h2>Alle liegen im grünen Bereich</h2>
+    <p>Jeder Termin hat eine Beliebtheit zwischen 3 (Freitagnachmittag) und 10 (Montag 10:30). Im Schnitt aller Termine liegt sie bei 6,65 (Strich). Der Durchschnitt jedes Studiengangs muss im grünen Bereich liegen, also höchstens 0,5 darüber oder darunter.</p>
+    <div class="fair" id="fair"></div>
+    <div class="scale"><span>6,0</span><span>6,65</span><span>7,3</span></div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Was noch kommt</div>
+    <h2>Nächste Schritte</h2>
+    <ul>
+      <li>Eine weitere Regel: Wer abends den letzten Termin hat, bekommt am nächsten Morgen nicht den ersten.</li>
+      <li>Eine automatische Kontrolle, die jeden fertigen Plan Regel für Regel prüft.</li>
+      <li>Experimente: Was passiert, wenn man Regeln strenger oder lockerer macht? Ab wann gibt es keinen gültigen Plan mehr?</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+const DATA = {"weeks":{"Woche 1":{"groups":{"ES":3,"INF":1,"MB":8,"MT":4,"DS":4},"bounds":{"ES":[6,6],"INF":[2,2],"MB":[16,16],"MT":[8,8],"DS":[8,8]},"day":{"ES":[1,2],"INF":[0,1],"MB":[3,4],"MT":[1,2],"DS":[1,2]},"sol":{"Mo_A_R1":"MT","Mo_A_R2":"MT","Mo_B_R1":"MB","Mo_B_R2":"MB","Mo_C_R1":"MB","Mo_C_R2":"ES","Mo_D_R1":"INF","Mo_D_R2":"DS","Di_A_R1":"MB","Di_A_R2":"DS","Di_B_R1":"MB","Di_B_R2":"MT","Di_C_R1":"ES","Di_C_R2":"ES","Di_D_R1":"MB","Di_D_R2":"MB","Mi_A_R1":"DS","Mi_A_R2":"DS","Mi_B_R1":"MB","Mi_B_R2":"ES","Mi_C_R1":"MT","Mi_C_R2":"INF","Mi_D_R1":"MB","Mi_D_R2":"MB","Do_A_R1":"DS","Do_A_R2":"DS","Do_B_R1":"MT","Do_B_R2":"MT","Do_C_R1":"MB","Do_C_R2":"MB","Do_D_R1":"ES","Do_D_R2":"MB","Fr_A_R1":"MB","Fr_A_R2":"MB","Fr_B_R1":"ES","Fr_B_R2":"DS","Fr_C_R1":"MT","Fr_C_R2":"DS","Fr_D_R1":"MB","Fr_D_R2":"MT"},"stats":[{"SG":"DS","Slots":8,"mittl. Popularität":6.75,"parallel":2,"aufeinanderfolgend":1},{"SG":"ES","Slots":6,"mittl. Popularität":6.5,"parallel":1,"aufeinanderfolgend":0},{"SG":"INF","Slots":2,"mittl. Popularität":6.5,"parallel":0,"aufeinanderfolgend":0},{"SG":"MB","Slots":16,"mittl. Popularität":6.56,"parallel":5,"aufeinanderfolgend":3},{"SG":"MT","Slots":8,"mittl. Popularität":6.88,"parallel":2,"aufeinanderfolgend":1}]},"Woche 2":{"groups":{"ET":2,"MB":8,"MT":4,"DS":4},"bounds":{"ET":[4,5],"MB":[17,18],"MT":[8,9],"DS":[8,9]},"day":{"ET":[0,1],"MB":[3,4],"MT":[1,2],"DS":[1,2]},"sol":{"Mo_A_R1":"MB","Mo_A_R2":"MB","Mo_B_R1":"MB","Mo_B_R2":"MT","Mo_C_R1":"ET","Mo_C_R2":"MB","Mo_D_R1":"DS","Mo_D_R2":"DS","Di_A_R1":"MT","Di_A_R2":"DS","Di_B_R1":"MB","Di_B_R2":"DS","Di_C_R1":"MB","Di_C_R2":"MB","Di_D_R1":"ET","Di_D_R2":"MT","Mi_A_R1":"MB","Mi_A_R2":"DS","Mi_B_R1":"MT","Mi_B_R2":"MB","Mi_C_R1":"MB","Mi_C_R2":"MB","Mi_D_R1":"ET","Mi_D_R2":"MT","Do_A_R1":"MB","Do_A_R2":"MB","Do_B_R1":"DS","Do_B_R2":"ET","Do_C_R1":"DS","Do_C_R2":"MB","Do_D_R1":"MT","Do_D_R2":"MT","Fr_A_R1":"MT","Fr_A_R2":"MT","Fr_B_R1":"MB","Fr_B_R2":"MB","Fr_C_R1":"MB","Fr_C_R2":"MB","Fr_D_R1":"DS","Fr_D_R2":"DS"},"stats":[{"SG":"DS","Slots":9,"mittl. Popularität":6.44,"parallel":2,"aufeinanderfolgend":2},{"SG":"ET","Slots":4,"mittl. Popularität":6.75,"parallel":0,"aufeinanderfolgend":0},{"SG":"MB","Slots":18,"mittl. Popularität":6.78,"parallel":6,"aufeinanderfolgend":6},{"SG":"MT","Slots":9,"mittl. Popularität":6.56,"parallel":2,"aufeinanderfolgend":0}]},"Woche 3":{"groups":{"WIW":5,"ET":2,"MB":8,"DS":4},"bounds":{"WIW":[10,11],"ET":[4,5],"MB":[16,17],"DS":[8,9]},"day":{"WIW":[2,3],"ET":[0,1],"MB":[3,4],"DS":[1,2]},"sol":{"Mo_A_R1":"MB","Mo_A_R2":"MB","Mo_B_R1":"WIW","Mo_B_R2":"WIW","Mo_C_R1":"ET","Mo_C_R2":"MB","Mo_D_R1":"DS","Mo_D_R2":"DS","Di_A_R1":"MB","Di_A_R2":"MB","Di_B_R1":"DS","Di_B_R2":"WIW","Di_C_R1":"MB","Di_C_R2":"MB","Di_D_R1":"WIW","Di_D_R2":"WIW","Mi_A_R1":"WIW","Mi_A_R2":"MB","Mi_B_R1":"DS","Mi_B_R2":"MB","Mi_C_R1":"ET","Mi_C_R2":"DS","Mi_D_R1":"WIW","Mi_D_R2":"MB","Do_A_R1":"WIW","Do_A_R2":"ET","Do_B_R1":"MB","Do_B_R2":"DS","Do_C_R1":"WIW","Do_C_R2":"DS","Do_D_R1":"MB","Do_D_R2":"MB","Fr_A_R1":"WIW","Fr_A_R2":"MB","Fr_B_R1":"ET","Fr_B_R2":"MB","Fr_C_R1":"DS","Fr_C_R2":"DS","Fr_D_R1":"MB","Fr_D_R2":"WIW"},"stats":[{"SG":"DS","Slots":9,"mittl. Popularität":6.33,"parallel":2,"aufeinanderfolgend":2},{"SG":"ET","Slots":4,"mittl. Popularität":6.5,"parallel":0,"aufeinanderfolgend":0},{"SG":"MB","Slots":16,"mittl. Popularität":6.75,"parallel":4,"aufeinanderfolgend":2},{"SG":"WIW","Slots":11,"mittl. Popularität":6.82,"parallel":2,"aufeinanderfolgend":0}]}},"pop":{"Mo_A_R1":9,"Mo_B_R1":10,"Mo_C_R1":7,"Mo_D_R1":7,"Di_A_R1":8,"Di_B_R1":9,"Di_C_R1":6,"Di_D_R1":6,"Mi_A_R1":8,"Mi_B_R1":9,"Mi_C_R1":6,"Mi_D_R1":6,"Do_A_R1":7,"Do_B_R1":8,"Do_C_R1":5,"Do_D_R1":5,"Fr_A_R1":5,"Fr_B_R1":6,"Fr_C_R1":3,"Fr_D_R1":3}};
+const DAYS = ["Mo", "Di", "Mi", "Do", "Fr"];
+const DAY_NAMES = { Mo: "Montag", Di: "Dienstag", Mi: "Mittwoch", Do: "Donnerstag", Fr: "Freitag" };
+const SLOTS = ["A", "B", "C", "D"];
+const TIMES = { A: "08:00–10:00", B: "10:30–12:30", C: "13:00–15:00", D: "15:30–17:30" };
+
+function chip(s) {
+  return `<span class="chip" style="background:var(--c-${s});color:var(--t-${s})">${s}</span>`;
+}
+
+// Übergänge "letzter Slot (D) an Tag d → erster Slot (A) an Tag d+1" desselben Studiengangs
+function findDA(sol) {
+  const hits = [];
+  for (let i = 0; i < DAYS.length - 1; i++) {
+    const d = DAYS[i], n = DAYS[i + 1];
+    const late = new Set([sol[`${d}_D_R1`], sol[`${d}_D_R2`]]);
+    const early = new Set([sol[`${n}_A_R1`], sol[`${n}_A_R2`]]);
+    late.forEach(s => { if (early.has(s)) hits.push({ s, from: d, to: n }); });
+  }
+  return hits;
+}
+
+function flaggedSlots(sol) {
+  const flagged = new Set();
+  findDA(sol).forEach(h => {
+    ["R1", "R2"].forEach(r => {
+      if (sol[`${h.from}_D_${r}`] === h.s) flagged.add(`${h.from}_D_${r}`);
+      if (sol[`${h.to}_A_${r}`] === h.s) flagged.add(`${h.to}_A_${r}`);
+    });
+  });
+  return flagged;
+}
+
+function cellHTML(sol, d, t, flagged) {
+  const a = sol[`${d}_${t}_R1`], b = sol[`${d}_${t}_R2`];
+  const f1 = flagged.has(`${d}_${t}_R1`), f2 = flagged.has(`${d}_${t}_R2`);
+  if (a === b) {
+    return `<div class="tile wide${f1 || f2 ? " flag" : ""}" style="background:var(--c-${a});color:var(--t-${a})" title="${a}: ${DAY_NAMES[d]} ${t}, beide Räume">${a}<small>R1 + R2 parallel</small></div>`;
+  }
+  return `<div class="tile${f1 ? " flag" : ""}" style="background:var(--c-${a});color:var(--t-${a})" title="${a}: ${DAY_NAMES[d]} ${t}, Raum 1">${a}<small>R1</small></div>` +
+         `<div class="tile${f2 ? " flag" : ""}" style="background:var(--c-${b});color:var(--t-${b})" title="${b}: ${DAY_NAMES[d]} ${t}, Raum 2">${b}<small>R2</small></div>`;
+}
+
+// Schmale Bildschirme: ein Block pro Tag statt einer breiten Tabelle
+function renderPlanByDay(el, week, opts = {}) {
+  const sol = DATA.weeks[week].sol;
+  const flagged = opts.flagDA ? flaggedSlots(sol) : new Set();
+  el.innerHTML = `<div class="dayplan" aria-label="Belegungsplan ${week}">` + DAYS.map(d =>
+    `<div class="daycard"><h4>${DAY_NAMES[d]}</h4>` + SLOTS.map(t =>
+      `<div class="drow"><span class="sl"><b>${t}</b>${TIMES[t].split("–")[0]}</span><div class="cell">${cellHTML(sol, d, t, flagged)}</div></div>`
+    ).join("") + `</div>`
+  ).join("") + `</div>`;
+}
+
+function renderPlan(el, week, opts = {}) {
+  const sol = DATA.weeks[week].sol;
+  const flagged = new Set();
+  if (opts.flagDA) {
+    findDA(sol).forEach(h => {
+      ["R1", "R2"].forEach(r => {
+        if (sol[`${h.from}_D_${r}`] === h.s) flagged.add(`${h.from}_D_${r}`);
+        if (sol[`${h.to}_A_${r}`] === h.s) flagged.add(`${h.to}_A_${r}`);
+      });
+    });
+  }
+  let html = `<div class="plan" role="table" aria-label="Belegungsplan ${week}"><div></div>`;
+  DAYS.forEach(d => { html += `<div class="hd" role="columnheader">${opts.longDays ? DAY_NAMES[d] : d}</div>`; });
+  SLOTS.forEach(t => {
+    html += `<div class="slotlbl" role="rowheader"><b>${t}</b>${TIMES[t].replace("–", "–<br>")}</div>`;
+    DAYS.forEach(d => {
+      const a = sol[`${d}_${t}_R1`], b = sol[`${d}_${t}_R2`];
+      const f1 = flagged.has(`${d}_${t}_R1`), f2 = flagged.has(`${d}_${t}_R2`);
+      html += `<div class="cell" role="cell">`;
+      if (a === b) {
+        html += `<div class="tile wide${f1 || f2 ? " flag" : ""}" style="background:var(--c-${a});color:var(--t-${a})" title="${a}: ${DAY_NAMES[d]} ${t}, beide Räume">${a}<small>R1 + R2 parallel</small></div>`;
+      } else {
+        html += `<div class="tile${f1 ? " flag" : ""}" style="background:var(--c-${a});color:var(--t-${a})" title="${a}: ${DAY_NAMES[d]} ${t}, Raum 1">${a}<small>R1</small></div>`;
+        html += `<div class="tile${f2 ? " flag" : ""}" style="background:var(--c-${b});color:var(--t-${b})" title="${b}: ${DAY_NAMES[d]} ${t}, Raum 2">${b}<small>R2</small></div>`;
+      }
+      html += `</div>`;
+    });
+  });
+  el.innerHTML = html + `</div>`;
+}
+
+function renderLegend(el, week) {
+  const g = DATA.weeks[week].groups;
+  el.innerHTML = Object.keys(g).map(s =>
+    `<span><i class="sw" style="background:var(--c-${s})"></i>${s} · ${g[s]} ${g[s] === 1 ? "Kursgruppe" : "Kursgruppen"}</span>`
+  ).join("");
+}
+
+function setupTabs(tabsEl, onChange) {
+  const weeks = Object.keys(DATA.weeks);
+  tabsEl.innerHTML = weeks.map((w, i) =>
+    `<button type="button" role="tab" aria-selected="${i === 0}" data-week="${w}">${w}</button>`).join("");
+  tabsEl.addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    tabsEl.querySelectorAll("button").forEach(x => x.setAttribute("aria-selected", x === b));
+    onChange(b.dataset.week);
+  });
+  onChange(weeks[0]);
+}
+
+document.getElementById("boxes").innerHTML = DAYS.map(d =>
+  `<div class="boxday"><b>${d}</b>${SLOTS.map(() => `<div class="pair"><span></span><span></span></div>`).join("")}</div>`).join("");
+
+function showShare(week) {
+  const d = DATA.weeks[week];
+  const counts = {};
+  Object.values(d.sol).forEach(s => counts[s] = (counts[s] || 0) + 1);
+  const order = Object.keys(d.groups);
+  let cells = "";
+  order.forEach(s => { for (let i = 0; i < counts[s]; i++) cells += `<span style="background:var(--c-${s})" title="${s}"></span>`; });
+  document.getElementById("shareBar").innerHTML = cells;
+  document.getElementById("shareText").innerHTML = order.map(s =>
+    `<span>${chip(s)} ${d.groups[s]} ${d.groups[s] === 1 ? "Gruppe" : "Gruppen"} → <b>${counts[s]}</b> Kästchen</span>`).join("");
+}
+setupTabs(document.getElementById("shareTabs"), showShare);
+
+const pos = v => ((v - 6.0) / (7.3 - 6.0) * 100).toFixed(1);
+function show(week) {
+  renderPlan(document.getElementById("plan"), week, { longDays: false });
+  renderLegend(document.getElementById("legend"), week);
+  document.getElementById("fair").innerHTML = DATA.weeks[week].stats.map(r => {
+    const p = r["mittl. Popularität"];
+    return `<div class="fair-row"><span>${chip(r.SG)}</span><div class="fair-track"><div class="fair-zone" style="left:${pos(6.15)}%;width:${pos(7.15) - pos(6.15)}%"></div><div class="fair-mid" style="left:${pos(6.65)}%"></div><div class="fair-dot" style="left:${pos(p)}%;background:var(--c-${r.SG})"></div></div><span class="mono">${p.toFixed(2).replace(".", ",")}</span></div>`;
+  }).join("");
+}
+setupTabs(document.getElementById("tabs"), show);
+</script>
